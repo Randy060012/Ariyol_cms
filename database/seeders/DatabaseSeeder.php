@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Page;
+use App\Models\Post;
 use App\Models\Section;
 use App\Models\Setting;
 use App\Models\User;
@@ -18,6 +19,7 @@ class DatabaseSeeder extends Seeder
         $this->seedAdmin();
         $this->seedSettings();
         $this->seedPages();
+        $this->seedPosts();
     }
 
     private function seedAdmin(): void
@@ -307,6 +309,50 @@ class DatabaseSeeder extends Seeder
                     'sort_order' => $index,
                 ]);
             }
+        }
+    }
+
+    /**
+     * Sample articles so the blog is not empty on a fresh install.
+     */
+    private function seedPosts(): void
+    {
+        if (Post::query()->exists()) {
+            return; // Ne pas écraser les articles créés via l'admin
+        }
+
+        $posts = [
+            [
+                'title' => 'Opération Togo Propre : 300 jeunes mobilisés à Tsévié',
+                'slug' => 'operation-togo-propre-2026',
+                'category' => 'Environnement',
+                'author' => 'AFRIYOL',
+                'excerpt' => 'Le 7 mars 2026, AFRIYOL et la Mairie Zio 1 ont réuni des centaines de volontaires pour le curage des caniveaux et la sensibilisation à la salubrité publique.',
+                'content' => "Le 7 mars 2026, l'opération « Togo Propre » a réuni à Tsévié plus de 300 volontaires, bénévoles d'AFRIYOL et habitants de la commune Zio 1. Pendant toute la matinée, les équipes ont procédé au curage des caniveaux et à la collecte des déchets sur les axes principaux de la ville.\n\nAu-delà du geste citoyen, l'objectif était de sensibiliser la population à la gestion des déchets ménagers. Des points de collecte ont été présentés aux riverains et des groupes de volontaires ont animé des discussions de proximité sur l'éco-citoyenneté.\n\nCette opération a été menée en partenariat avec la Mairie Zio 1, dont l'appui logistique a été décisif. Elle s'inscrit dans le cadre de l'axe Environnement, Climat et Salubrité d'AFRIYOL, qui prévoit plusieurs actions similaires dans les mois à venir.\n\nNous remercions chaleureusement toutes les personnes qui ont répondu présentes. La salubrité publique est l'affaire de tous : rendez-vous à la prochaine édition.",
+            ],
+            [
+                'title' => 'Atelier Leadership & Art Oratoire avec les UST et JOKO-TOGO',
+                'slug' => 'atelier-leadership-art-oratoire',
+                'category' => 'Éducation',
+                'author' => 'AFRIYOL',
+                'excerpt' => 'Le 23 août 2025, notre staff a formé les enfants de l\'orphelinat JOKO-TOGO à l\'art oratoire et au leadership, avec le soutien des Universités Sociales du Togo.',
+                'content' => "Le 23 août 2025, AFRIYOL a animé un atelier de leadership et d'art oratoire au profit des enfants de l'orphelinat JOKO-TOGO. La formation, assurée par notre staff avec l'appui des Universités Sociales du Togo (UST), a rassemblé une trentaine de participants.\n\nAu programme : exercices de prise de parole en public, jeux de rôle sur la confiance en soi et initiation à la pratique du débat. Chaque enfant a pu s'exprimer devant le groupe et recevoir un retour bienveillant sur sa prestation.\n\nCet atelier illustre notre conviction : le leadership se cultive dès le plus jeune âge. Nous poursuivrons ce programme tout au long de l'année scolaire.",
+            ],
+            [
+                'title' => '500 plants à Zéglé-Sagonou : premier bilan du suivi écologique',
+                'slug' => 'suivi-ecologique-zegle-sagonou',
+                'category' => 'Environnement',
+                'author' => 'AFRIYOL',
+                'excerpt' => 'Le 31 janvier 2026, nos équipes ont inspecté les 500 plants d\'arbres de Zéglé-Sagonou. Taux de survie, arrosage et entretien : le point complet.',
+                'content' => "Le 31 janvier 2026, les équipes d'AFRIYOL ont mené la campagne de suivi des 500 plants d'arbres mis en terre à Zéglé-Sagonou dans le cadre de notre programme de reboisement.\n\nLe bilan est encourageant : la majorité des plants ont survécu à la première saison sèche grâce à un calendrier d'arrosage tenu par les volontaires du village. Les plants les plus fragiles ont été remplacés.\n\nCe suivi écologique sera renouvelé tous les trimestres, en collaboration avec les autorités locales. Objectif : garantir que chaque arbre planté devienne une canopée durable pour les générations futures.",
+            ],
+        ];
+
+        foreach ($posts as $index => $post) {
+            Post::updateOrCreate(
+                ['slug' => $post['slug']],
+                $post + ['is_published' => true, 'sort_order' => $index]
+            );
         }
     }
 }

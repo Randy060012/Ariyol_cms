@@ -272,6 +272,7 @@
 
                 <span class="nav-group-label">Contenu</span>
                 <a href="{{ route('admin.pages.index') }}" class="{{ request()->routeIs('admin.pages.*') ? 'is-active' : '' }}">Pages</a>
+                <a href="{{ route('admin.posts.index') }}" class="{{ request()->routeIs('admin.posts.*') ? 'is-active' : '' }}">Articles du blog</a>
                 <a href="{{ route('admin.settings.edit') }}" class="{{ request()->routeIs('admin.settings.*') ? 'is-active' : '' }}">Paramètres du site</a>
 
                 <span class="group-label nav-group-label">Interactions</span>

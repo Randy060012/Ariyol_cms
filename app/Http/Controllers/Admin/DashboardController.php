@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use App\Models\Page;
+use App\Models\Post;
 use App\Models\Section;
 use App\Models\Setting;
 use Illuminate\View\View;
@@ -16,6 +17,7 @@ class DashboardController extends Controller
         return view('admin.dashboard', [
             'pagesCount' => Page::count(),
             'sectionsCount' => Section::count(),
+            'postsCount' => Post::count(),
             'settingsCount' => Setting::count(),
             'unreadMessages' => Contact::where('is_read', false)->count(),
             'totalMessages' => Contact::count(),

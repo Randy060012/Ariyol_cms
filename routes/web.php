@@ -4,8 +4,10 @@ use App\Http\Controllers\Admin\AuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MessageController;
 use App\Http\Controllers\Admin\PageController;
+use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Font\BlogController;
 use App\Http\Controllers\Font\CmsPageController;
 use App\Http\Controllers\Font\ContactController;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +27,10 @@ Route::get('/contact', [CmsPageController::class, 'show'])->defaults('slug', 'co
 
 // Formulaire de contact
 Route::post('/contact', [ContactController::class, 'submitContact'])->name('contact.submit');
+
+// Blog
+Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
+Route::get('/blog/{post:slug}', [BlogController::class, 'show'])->name('blog.show');
 
 /*
 |--------------------------------------------------------------------------
@@ -53,6 +59,10 @@ Route::prefix('admin')->middleware('admin.auth')->group(function () {
     Route::put('/pages/{page}/sections/{section}', [SectionController::class, 'update'])->name('admin.sections.update');
     Route::delete('/pages/{page}/sections/{section}', [SectionController::class, 'destroy'])->name('admin.sections.destroy');
     Route::post('/pages/{page}/sections/{section}/move', [SectionController::class, 'move'])->name('admin.sections.move');
+
+    Route::resource('posts', PostController::class)
+        ->names('admin.posts')
+        ->except(['show']);
 
     Route::get('/messages', [MessageController::class, 'index'])->name('admin.messages.index');
     Route::post('/messages/{message}/read', [MessageController::class, 'markRead'])->name('admin.messages.read');
