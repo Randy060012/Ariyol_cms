@@ -33,7 +33,7 @@
             @endif
 
             @if ($post->main_image)
-                <img src="{{ asset($post->main_image) }}" alt="{{ $post->title }}" loading="lazy" style="width: 100%; aspect-ratio: 21/9; object-fit: cover; border: 1px solid var(--border); margin-bottom: 36px;">
+                <img src="{{ asset($post->main_image) }}" alt="{{ $post->title }}" loading="lazy" data-lightbox style="width: 100%; aspect-ratio: 21/9; object-fit: cover; border: 1px solid var(--border); margin-bottom: 36px;">
             @endif
 
             <div class="article-prose">
@@ -50,7 +50,7 @@
                     <div class="grid-3" style="gap: 16px;">
                         @foreach ($post->galleryImages() as $image)
                             <figure class="media-item">
-                                <img src="{{ asset($image) }}" alt="Illustration de l'article" loading="lazy" style="aspect-ratio: 4/3;">
+                                <img src="{{ asset($image) }}" alt="Illustration de l'article" loading="lazy" data-lightbox style="aspect-ratio: 4/3;">
                             </figure>
                         @endforeach
                     </div>

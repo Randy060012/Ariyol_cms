@@ -148,6 +148,18 @@
         .field textarea { resize: vertical; min-height: 90px; }
         .error-text { display: block; margin-top: 5px; font-size: 12.5px; color: #b42318; }
 
+        /* Galeries d'images (logos partenaires, images de section) */
+        .gallery-current { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; }
+        .gallery-current-item { display: grid; gap: 6px; justify-items: start; align-content: start; }
+        .gallery-current-item img {
+            max-height: 90px;
+            max-width: 160px;
+            object-fit: contain;
+            border: 1px solid var(--border);
+            background: var(--white);
+            padding: 4px;
+        }
+
         /* Buttons */
         .btn {
             display: inline-flex;

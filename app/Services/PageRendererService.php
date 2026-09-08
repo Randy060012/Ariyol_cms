@@ -15,6 +15,7 @@ class PageRendererService
         'cards' => 'Cartes de contenu',
         'checklist' => 'Liste à puces',
         'quote' => 'Citation',
+        'partners' => 'Logos partenaires (défilement)',
         'cta' => 'Appel à l\'action',
     ];
 
@@ -45,12 +46,14 @@ class PageRendererService
                 'kicker' => ['label' => 'Sur-titre', 'type' => 'text'],
                 'title' => ['label' => 'Titre', 'type' => 'text'],
                 'image' => ['label' => 'Image (URL ou chemin)', 'type' => 'image'],
+                'images' => ['label' => 'Galerie d\'images de la section', 'type' => 'gallery'],
                 'items' => ['label' => 'Éléments (un par ligne : Titre | Description)', 'type' => 'textarea', 'rows' => 5],
             ],
             'cards' => [
                 'kicker' => ['label' => 'Sur-titre', 'type' => 'text'],
                 'title' => ['label' => 'Titre', 'type' => 'text'],
                 'image' => ['label' => 'Image (URL ou chemin)', 'type' => 'image'],
+                'images' => ['label' => 'Galerie d\'images de la section', 'type' => 'gallery'],
                 'columns' => ['label' => 'Colonnes (2 ou 3)', 'type' => 'number'],
                 'items' => ['label' => 'Cartes (une par ligne : Titre | Description)', 'type' => 'textarea', 'rows' => 6],
             ],
@@ -59,6 +62,7 @@ class PageRendererService
                 'title' => ['label' => 'Titre', 'type' => 'text'],
                 'lead' => ['label' => 'Introduction', 'type' => 'text'],
                 'image' => ['label' => 'Image (URL ou chemin)', 'type' => 'image'],
+                'images' => ['label' => 'Galerie d\'images de la section', 'type' => 'gallery'],
                 'items' => ['label' => 'Points (un par ligne)', 'type' => 'textarea', 'rows' => 6],
             ],
             'quote' => [
@@ -66,12 +70,19 @@ class PageRendererService
                 'author' => ['label' => 'Auteur', 'type' => 'text'],
                 'role' => ['label' => 'Fonction', 'type' => 'text'],
                 'image' => ['label' => 'Image (URL ou chemin)', 'type' => 'image'],
+                'images' => ['label' => 'Galerie d\'images de la section', 'type' => 'gallery'],
+            ],
+            'partners' => [
+                'kicker' => ['label' => 'Sur-titre', 'type' => 'text'],
+                'title' => ['label' => 'Titre', 'type' => 'text'],
+                'logos' => ['label' => 'Logos des partenaires', 'type' => 'gallery'],
             ],
             'cta' => [
                 'kicker' => ['label' => 'Sur-titre', 'type' => 'text'],
                 'title' => ['label' => 'Titre', 'type' => 'text'],
                 'text' => ['label' => 'Texte', 'type' => 'textarea', 'rows' => 3],
                 'image' => ['label' => 'Image (URL ou chemin)', 'type' => 'image'],
+                'images' => ['label' => 'Galerie d\'images de la section', 'type' => 'gallery'],
                 'button_label' => ['label' => 'Libellé du bouton', 'type' => 'text'],
                 'button_url' => ['label' => 'Lien du bouton', 'type' => 'text'],
             ],

@@ -4,6 +4,10 @@
     $title = $d['title'] ?? null;
     $items = $d['items'] ?? [];
     $image = !empty($d['image']) ? $d['image'] : null;
+    // Galerie multi-images de la section (gérée depuis l'administration).
+    $images = !empty($d['images']) && is_array($d['images']) ? $d['images'] : [];
+    // Logos des partenaires (section « partners » uniquement).
+    $logos = !empty($d['logos']) && is_array($d['logos']) ? $d['logos'] : [];
 @endphp
 
 @php
@@ -104,6 +108,49 @@
                     <a href="{{ $d['button_url'] ?? route('contact') }}" class="btn btn-light">{{ $d['button_label'] }}</a>
                 </p>
             @endif
+        @endif
+
+        @if ($section->type === 'partners')
+            {{--
+                Partenariats : bandeau de logos des partenaires en défilement
+                horizontal continu. Remplace l'ancienne section « Cartes de
+                contenu - Partenariats » (conservée en commentaire dans le
+                DatabaseSeeder). Logos gérés depuis l'administration,
+                au niveau de la page d'accueil.
+            --}}
+            <div class="section-head center">
+                @if ($kicker)<span class="kicker">{{ $kicker }}</span>@endif
+                @if ($title)<h2 class="h-section">{{ $title }}</h2>@endif
+            </div>
+            @if (!empty($logos))
+                <div class="logo-marquee" aria-label="Logos de nos partenaires">
+                    <div class="logo-track">
+                        {{-- Le contenu est dupliqué en deux groupes identiques : le
+                             déplacement de -50% correspond alors exactement à un
+                             groupe, pour un défilement parfaitement continu. --}}
+                        @for ($copy = 0; $copy < 2; $copy++)
+                            <div class="logo-group" @if ($copy === 1) aria-hidden="true" @endif>
+                                @foreach ($logos as $logo)
+                                    <span class="logo-item"><img src="{{ asset($logo) }}" alt="" loading="lazy"></span>
+                                @endforeach
+                            </div>
+                        @endfor
+                    </div>
+                </div>
+            @else
+                <p class="muted small" style="text-align: center;">Les logos de nos partenaires seront affichés ici dès leur ajout depuis l'administration.</p>
+            @endif
+        @endif
+
+        {{-- Galerie d'images de la section (endroits réservés pour l'ajout d'images). --}}
+        @if (!empty($images))
+            <div class="gallery-grid">
+                @foreach ($images as $img)
+                    <figure class="gallery-item">
+                        <img src="{{ asset($img) }}" alt="" loading="lazy" data-lightbox>
+                    </figure>
+                @endforeach
+            </div>
         @endif
 
     </div>

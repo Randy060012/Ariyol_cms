@@ -210,6 +210,14 @@
         .page-hero { background: var(--navy); color: var(--white); padding: clamp(72px, 10vw, 112px) 0; border-bottom: 4px solid var(--green); }
         .page-hero p { color: #b9c8dc; margin-top: 12px; max-width: 60ch; }
 
+        /* Pages d'erreur : même traitement visuel que le hero, sans image de fond. */
+        .error-hero {
+            background: var(--navy);
+            color: var(--white);
+            padding: clamp(96px, 14vw, 160px) 0 clamp(64px, 9vw, 110px);
+        }
+        .error-hero p.lead { color: #b9c8dc; }
+
         .breadcrumbs { display: flex; flex-wrap: wrap; gap: 8px; font-size: 12.5px; letter-spacing: .04em; color: #8fa5bd; margin-bottom: 18px; }
         .breadcrumbs a:hover { color: var(--white); }
         .breadcrumbs .sep { opacity: .5; }
@@ -275,6 +283,100 @@
         .media-item { border: 1px solid var(--border); border-radius: 2px; overflow: hidden; background: var(--white); }
         .media-item img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
         .media-item figcaption { padding: 16px 18px; font-size: 13.5px; color: var(--muted); border-top: 1px solid var(--border); }
+
+        /* ============ PARTENAIRES (LOGOS DÉFILANTS) ============ */
+        .logo-marquee {
+            overflow: hidden;
+            position: relative;
+            border-block: 1px solid var(--border);
+            padding-block: 28px;
+            -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+            mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+        }
+        .logo-track {
+            display: flex;
+            align-items: center;
+            width: max-content;
+            animation: logo-scroll 32s linear infinite;
+        }
+        .logo-group {
+            display: flex;
+            align-items: center;
+            gap: clamp(40px, 6vw, 88px);
+            padding-right: clamp(40px, 6vw, 88px);
+        }
+        .logo-marquee:hover .logo-track { animation-play-state: paused; }
+        .logo-item {
+            flex: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            padding: 16px 30px;
+        }
+        .logo-item img { height: 56px; width: auto; max-width: 170px; object-fit: contain; }
+        @keyframes logo-scroll {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .logo-track { animation: none; flex-wrap: wrap; justify-content: center; width: auto; }
+        }
+
+        /* ============ GALERIES D'IMAGES DE SECTION ============ */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-top: clamp(32px, 5vw, 56px);
+        }
+        .gallery-item {
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+            background: var(--white);
+        }
+        .gallery-item img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+
+        /* ============ LIGHTBOX ============ */
+        .lightbox {
+            border: none;
+            padding: 0;
+            background: rgba(7, 30, 54, .92);
+            max-width: none;
+            max-height: none;
+            width: 100%;
+            height: 100%;
+            outline: none;
+        }
+        .lightbox::backdrop { background: rgba(7, 30, 54, .92); }
+        .lightbox img {
+            display: block;
+            max-width: min(92vw, 1200px);
+            max-height: 84vh;
+            margin: auto;
+            object-fit: contain;
+            border: 1px solid rgba(255, 255, 255, .2);
+        }
+        .lightbox-close {
+            position: fixed;
+            top: 18px;
+            right: 22px;
+            background: none;
+            border: 1px solid rgba(255, 255, 255, .4);
+            border-radius: 2px;
+            color: var(--white);
+            font-size: 26px;
+            line-height: 1;
+            padding: 8px 14px;
+            cursor: pointer;
+        }
+        .lightbox-close:hover { background: rgba(255, 255, 255, .12); }
+
+        /* Les images zoomables montrent qu'elles sont cliquables. */
+        img[data-lightbox] { cursor: zoom-in; }
 
         /* ============ FORMULAIRES ============ */
         .field { margin-bottom: 18px; }
@@ -357,7 +459,7 @@
         /* ============ RESPONSIVE ============ */
         @media (max-width: 1024px) {
             .grid-3 { grid-template-columns: repeat(2, 1fr); }
-            .media-strip { grid-template-columns: repeat(2, 1fr); }
+            .media-strip, .gallery-grid { grid-template-columns: repeat(2, 1fr); }
             .footer-grid { grid-template-columns: 1fr 1fr; }
         }
 
@@ -392,9 +494,10 @@
         }
 
         @media (max-width: 640px) {
-            .grid-3, .media-strip { grid-template-columns: 1fr; }
+            .grid-3, .media-strip, .gallery-grid { grid-template-columns: 1fr; }
             .footer-grid { grid-template-columns: 1fr; }
             .hero-actions .btn { width: 100%; justify-content: center; }
+            .logo-item img { height: 44px; }
         }
     </style>
     @stack('styles')
@@ -409,10 +512,41 @@
 
     @include('layouts.footer')
 
+    {{-- Lightbox : boîte de dialogue native, activée sur toute image marquée data-lightbox. --}}
+    <dialog class="lightbox" id="lightbox" aria-label="Aperçu de l'image">
+        <button type="button" class="lightbox-close" aria-label="Fermer l'aperçu">&times;</button>
+        <img src="" alt="">
+    </dialog>
+
     <script>
         document.querySelector('.nav-toggle').addEventListener('click', function () {
             document.querySelector('.nav-links').classList.toggle('is-open');
         });
+
+        (function () {
+            var lightbox = document.getElementById('lightbox');
+            if (! lightbox) { return; }
+
+            var target = lightbox.querySelector('img');
+
+            document.addEventListener('click', function (event) {
+                var img = event.target.closest('img[data-lightbox]');
+
+                if (! img) { return; }
+
+                target.src = img.currentSrc || img.src;
+                target.alt = img.alt || '';
+                lightbox.showModal();
+            });
+
+            lightbox.querySelector('.lightbox-close').addEventListener('click', function () {
+                lightbox.close();
+            });
+
+            lightbox.addEventListener('click', function (event) {
+                if (event.target === lightbox) { lightbox.close(); }
+            });
+        })();
     </script>
 
     @stack('scripts')

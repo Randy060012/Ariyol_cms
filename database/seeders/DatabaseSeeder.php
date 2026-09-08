@@ -86,6 +86,8 @@ class DatabaseSeeder extends Seeder
                             ['title' => 'Paix, Droits & Inclusion', 'description' => 'Prévention de l\'extrémisme violent, promotion de la cohésion sociale et de l\'inclusion du genre.'],
                         ],
                     ]],
+                    /* ANCIENNE SECTION « PARTENARIATS » (cartes de texte) — conservée en commentaire.
+                       Elle est remplacée par la section « Logos partenaires (défilement) » ci-dessous.
                     ['cards', [
                         'kicker' => 'Partenariats',
                         'title' => 'Nos partenaires et collaborateurs',
@@ -98,6 +100,13 @@ class DatabaseSeeder extends Seeder
                             ['title' => 'Afrik\'handi', 'description' => 'Accord média pour la promotion de l\'inclusion des personnes handicapées.'],
                             ['title' => 'RSE-SC TOGO', 'description' => 'Plateforme nationale de responsabilité sociétale des entreprises et de la société civile.'],
                         ],
+                    ]],
+                    FIN DE L'ANCIENNE SECTION. */
+
+                    ['partners', [
+                        'kicker' => 'Partenariats',
+                        'title' => 'Nos partenaires et collaborateurs',
+                        'logos' => [], // Logos téléversés depuis l'administration (page Accueil).
                     ]],
                     ['cards', [
                         'kicker' => 'Activités récentes',

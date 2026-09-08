@@ -59,6 +59,11 @@ class SectionController extends Controller
 
         $this->handleImage($request, $section, $data, $imageField);
 
+        // Galeries multi-images (logos partenaires, images de section, ...).
+        foreach ($this->galleryFields($section->type) as $galleryField) {
+            $this->handleGallery($request, $section, $data, $galleryField);
+        }
+
         $section->update([
             'data' => $data,
             'is_visible' => $request->boolean('is_visible'),
@@ -130,6 +135,69 @@ class SectionController extends Controller
         // No upload, no removal: preserve the existing image, if any.
         if (is_string($current) && $current !== '') {
             $data[$imageField] = $current;
+        }
+    }
+
+    /**
+     * Names of the multi-image (gallery) fields for a section type, if any.
+     */
+    private function galleryFields(string $type): array
+    {
+        $fields = [];
+
+        foreach (PageRendererService::sectionTypeFields($type) as $name => $config) {
+            if (($config['type'] ?? 'text') === 'gallery') {
+                $fields[] = $name;
+            }
+        }
+
+        return $fields;
+    }
+
+    /**
+     * Resolve a gallery value (array of image paths) for storage, handling
+     * the three cases:
+     * - files are uploaded: store each one and append them to the gallery;
+     * - images are checked for removal: delete them from storage;
+     * - otherwise: keep the current images (uploads must not be lost when
+     *   the admin edits other fields without re-selecting files).
+     */
+    private function handleGallery(Request $request, Section $section, array &$data, string $field): void
+    {
+        $current = $section->field($field, []);
+
+        if (! is_array($current)) {
+            $current = [];
+        }
+
+        // Remove the images checked in the form (identified by their index).
+        $removed = array_map('intval', (array) $request->input("remove_{$field}", []));
+        $kept = [];
+
+        foreach ($current as $index => $path) {
+            if (in_array($index, $removed, true)) {
+                $this->deleteStoredImage($path);
+
+                continue;
+            }
+
+            $kept[] = $path;
+        }
+
+        // Append newly uploaded images, after validating each file.
+        if ($request->hasFile("data_file_{$field}")) {
+            $request->validate([
+                "data_file_{$field}" => ['array'],
+                "data_file_{$field}.*" => ['image', 'mimes:jpg,jpeg,png,webp,svg', 'max:4096'],
+            ]);
+
+            foreach ($request->file("data_file_{$field}") as $file) {
+                $kept[] = 'storage/'.$file->store('sections', 'public');
+            }
+        }
+
+        if ($kept !== []) {
+            $data[$field] = $kept;
         }
     }
 
