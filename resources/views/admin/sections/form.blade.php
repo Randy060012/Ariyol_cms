@@ -20,25 +20,33 @@
             </div>
 
             @foreach ($fields as $name => $config)
-                @php $currentValue = old('data.'.$name, $section->field($name)); @endphp
+                @php
+                    $fieldType = $config['type'] ?? \App\Services\PageRendererService::FIELD_TEXT;
+                    $currentValue = old('data.'.$name, $section->field($name));
+                    $inputId = 'data_'.$name;
+                @endphp
 
-                @if (($config['type'] ?? 'text') === 'textarea')
+                @if ($fieldType === \App\Services\PageRendererService::FIELD_TEXTAREA)
                     <div class="field">
-                        <label for="data[{{ $name }}]">{{ $config['label'] }}</label>
-                        <textarea id="data[{{ $name }}]" name="data[{{ $name }}]" rows="{{ $config['rows'] ?? 4 }}">{{ $section->type === 'facts' || $section->type === 'cards' || $section->type === 'checklist' ? $section->itemsAsText() : $currentValue }}</textarea>
+                        <label for="{{ $inputId }}">{{ $config['label'] }}</label>
+                        @if ($name === 'items')
+                            <textarea id="{{ $inputId }}" name="data[{{ $name }}]" rows="{{ $config['rows'] ?? 4 }}">{{ $section->itemsAsText() }}</textarea>
+                        @else
+                            <textarea id="{{ $inputId }}" name="data[{{ $name }}]" rows="{{ $config['rows'] ?? 4 }}">{{ $currentValue }}</textarea>
+                        @endif
                     </div>
-                @elseif (($config['type'] ?? 'text') === 'image')
+                @elseif ($fieldType === \App\Services\PageRendererService::FIELD_IMAGE)
                     <div class="field">
-                        <label for="data[{{ $name }}]">{{ $config['label'] }} <span class="hint">Laisser vide si vous téléversez un fichier ci-dessous.</span></label>
-                        <input type="text" id="data[{{ $name }}]" name="data[{{ $name }}]" value="{{ $currentValue }}">
+                        <label for="{{ $inputId }}">{{ $config['label'] }} <span class="hint">Une image principale, affichée en haut de la section. Laissez le champ vide si vous téléversez un fichier.</span></label>
+                        <input type="text" id="{{ $inputId }}" name="data[{{ $name }}]" value="{{ $currentValue }}">
 
                         <label for="data_file_{{ $name }}" style="margin-top: 8px;">... ou téléverser une image</label>
                         <input type="file" id="data_file_{{ $name }}" name="data_file_{{ $name }}" accept="image/png,image/jpeg,image/webp,image/svg+xml">
                         @error('data_file_'.$name) <span class="error-text">{{ $message }}</span> @enderror
 
                         @if (!empty($currentValue))
-                            <div style="margin-top: 10px; display: flex; align-items: center; gap: 14px;">
-                                <img src="{{ asset($currentValue) }}" alt="Image actuelle" style="max-height: 110px; border: 1px solid var(--border);">
+                            <div class="media-current">
+                                <img src="{{ \App\Support\Media::url($currentValue) }}" alt="Image actuelle">
                                 <label style="font-weight: 400;">
                                     <input type="checkbox" name="remove_{{ $name }}" value="1">
                                     Supprimer cette image
@@ -46,13 +54,8 @@
                             </div>
                         @endif
                     </div>
-                @elseif (($config['type'] ?? 'text') === 'gallery')
-                    @php
-                        $currentImages = old('data.'.$name, $section->field($name, []));
-                        if (! is_array($currentImages)) {
-                            $currentImages = [];
-                        }
-                    @endphp
+                @elseif ($fieldType === \App\Services\PageRendererService::FIELD_GALLERY)
+                    @php $currentImages = old('data.'.$name, $section->gallery($name)); @endphp
 
                     <div class="field">
                         <label>{{ $config['label'] }} <span class="hint">Téléversez plusieurs fichiers d'un coup si besoin. Les images existantes sont conservées tant qu'elles ne sont pas cochées pour suppression.</span></label>
@@ -61,7 +64,7 @@
                             <div class="gallery-current">
                                 @foreach ($currentImages as $i => $img)
                                     <div class="gallery-current-item">
-                                        <img src="{{ asset($img) }}" alt="Image {{ $i + 1 }}">
+                                        <img src="{{ \App\Support\Media::url($img) }}" alt="Image {{ $i + 1 }}">
                                         <label style="font-weight: 400;">
                                             <input type="checkbox" name="remove_{{ $name }}[]" value="{{ $i }}">
                                             Supprimer
@@ -73,15 +76,53 @@
 
                         <label for="data_file_{{ $name }}" style="margin-top: 8px;">... ou ajouter des images <span class="hint">Sélection multiple ou glisser-déposer.</span></label>
                         <input type="file" id="data_file_{{ $name }}" name="data_file_{{ $name }}[]" multiple accept="image/png,image/jpeg,image/webp,image/svg+xml">
+                        @error('data_file_'.$name) <span class="error-text">{{ $message }}</span> @enderror
                         @error('data_file_'.$name.'.*') <span class="error-text">{{ $message }}</span> @enderror
                     </div>
                 @else
                     <div class="field">
-                        <label for="data[{{ $name }}]">{{ $config['label'] }}</label>
-                        <input type="{{ $config['type'] ?? 'text' }}" id="data[{{ $name }}]" name="data[{{ $name }}]" value="{{ $currentValue }}">
+                        <label for="{{ $inputId }}">{{ $config['label'] }}</label>
+                        <input type="{{ $fieldType }}" id="{{ $inputId }}" name="data[{{ $name }}]" value="{{ $currentValue }}">
                     </div>
                 @endif
             @endforeach
+
+            @if ($itemImagesAllowed)
+                @php $itemImages = $section->itemImages(); @endphp
+
+                <div class="field">
+                    <label>Photo de chaque carte <span class="hint">Optionnel. Les photos suivent l'ordre des lignes saisies ci-dessus et remplacent la carte sans photo.</span></label>
+
+                    @if (count($section->items()))
+                        <div class="item-media-list">
+                            @foreach ($section->items() as $index => $item)
+                                @php $itemImage = $itemImages[$index] ?? null; @endphp
+
+                                <div class="item-media">
+                                    <div class="item-media-head">
+                                        <strong>{{ $index + 1 }}. {{ $item['title'] ?? 'Carte sans titre' }}</strong>
+                                    </div>
+
+                                    @if ($itemImage)
+                                        <div class="media-current">
+                                            <img src="{{ \App\Support\Media::url($itemImage) }}" alt="Photo de la carte {{ $index + 1 }}">
+                                            <label style="font-weight: 400;">
+                                                <input type="checkbox" name="remove_item_image_{{ $index }}" value="1">
+                                                Supprimer cette photo
+                                            </label>
+                                        </div>
+                                    @endif
+
+                                    <input type="file" id="data_item_image_{{ $index }}" name="data_item_image_{{ $index }}" accept="image/png,image/jpeg,image/webp,image/svg+xml">
+                                    @error('data_item_image_'.$index) <span class="error-text">{{ $message }}</span> @enderror
+                                </div>
+                            @endforeach
+                        </div>
+                    @else
+                        <p class="hint">Ajoutez d'abord des cartes dans le champ de texte, puis revenez pour leur associer une photo.</p>
+                    @endif
+                </div>
+            @endif
 
             <div style="display: flex; gap: 12px;">
                 <button type="submit" class="btn btn-green">Enregistrer</button>
@@ -148,27 +189,46 @@
                 labelMaxFileSize: 'La taille maximale est de 4 Mo'
             };
 
+            var acceptedFileTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'];
+
+            /* Chaque champ est converti au premier FilePond détecté : le FileList
+               natif est reconstruit à la soumission pour rester compatible. */
+            function attach(input, options) {
+                var pond = FilePond.create(input, Object.assign({
+                    credits: false,
+                    ...fr
+                }, options));
+
+                var form = input.closest('form');
+                if (! form) { return; }
+
+                form.addEventListener('submit', function () {
+                    var dt = new DataTransfer();
+                    pond.getFiles().forEach(function (f) { dt.items.add(f.file); });
+                    input.files = dt.files;
+                });
+            }
+
             /* ---- Galeries de section (images ou logos) : multiple, réordonnable ---- */
-            document.querySelectorAll('input[type="file"][name^="data_file_"][multiple]').forEach(function (input) {
-                var pond = FilePond.create(input, {
+            document.querySelectorAll('input[type="file"][multiple]').forEach(function (input) {
+                attach(input, {
                     allowMultiple: true,
                     maxFiles: 12,
                     maxFileSize: '4MB',
-                    acceptedFileTypes: ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml'],
+                    acceptedFileTypes: acceptedFileTypes,
                     allowReorder: true,
-                    itemInsertLocation: 'end',
-                    credits: false,
-                    ...fr
+                    itemInsertLocation: 'end'
                 });
+            });
 
-                var form = input.closest('form');
-                if (form) {
-                    form.addEventListener('submit', function () {
-                        var dt = new DataTransfer();
-                        pond.getFiles().forEach(function (f) { dt.items.add(f.file); });
-                        input.files = dt.files;
-                    });
-                }
+            /* ---- Images unitaires : image de section et photos de carte ---- */
+            document.querySelectorAll('input[type="file"]:not([multiple])').forEach(function (input) {
+                attach(input, {
+                    allowMultiple: false,
+                    maxFiles: 1,
+                    maxFileSize: '4MB',
+                    acceptedFileTypes: acceptedFileTypes
+                });
             });
         });
     </script>

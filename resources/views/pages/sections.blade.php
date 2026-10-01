@@ -3,11 +3,13 @@
     $kicker = $d['kicker'] ?? null;
     $title = $d['title'] ?? null;
     $items = $d['items'] ?? [];
-    $image = !empty($d['image']) ? $d['image'] : null;
+    $image = !empty($d['image']) ? \App\Support\Media::url($d['image']) : null;
     // Galerie multi-images de la section (gérée depuis l'administration).
     $images = !empty($d['images']) && is_array($d['images']) ? $d['images'] : [];
     // Logos des partenaires (section « partners » uniquement).
     $logos = !empty($d['logos']) && is_array($d['logos']) ? $d['logos'] : [];
+    // Grille de cartes pilotée par le réglage « colonnes » du CMS.
+    $cardsColumns = (int) ($d['columns'] ?? 3);
 @endphp
 
 @php
@@ -17,9 +19,9 @@
 @endphp
 
 @php
-    // Image banner shared by facts / cards / checklist / cta.
+    // Image banner shared by facts / cards / checklist / cta / partners.
     $imageBanner = fn (?string $src) => $src
-        ? '<img src="'.e(asset($src)).'" alt="" loading="lazy" style="width: 100%; aspect-ratio: 21/9; object-fit: cover; border: 1px solid var(--border);">'
+        ? '<img src="'.e($src).'" alt="" loading="lazy" style="width: 100%; aspect-ratio: 21/9; object-fit: cover; border: 1px solid var(--border);">'
         : '';
 @endphp
 
@@ -45,16 +47,21 @@
 
         @if ($section->type === 'cards')
             @if ($kicker || $title)
-                <div class="section-head {{ ($d['columns'] ?? 3) == 2 ? '' : 'center' }}">
+                <div class="section-head {{ $cardsColumns === 2 ? '' : 'center' }}">
                     @if ($kicker)<span class="kicker">{{ $kicker }}</span>@endif
                     @if ($title)<h2 class="h-section">{{ $title }}</h2>@endif
                 </div>
             @endif
             {!! $imageBanner($image) !!}
             @if ($image)<div style="height: 28px;"></div>@endif
-            <div class="grid-3">
+            <div class="{{ $cardsColumns === 2 ? 'grid-2' : 'grid-3' }}">
                 @foreach ($items as $item)
                     <div class="rule-card {{ $loop->odd ? '' : 'green-top' }}">
+                        @if (!empty($item['image']))
+                            <div class="card-media">
+                                <img src="{{ \App\Support\Media::url($item['image']) }}" alt="" loading="lazy" data-lightbox>
+                            </div>
+                        @endif
                         <h3>{{ $item['title'] }}</h3>
                         <p>{{ $item['description'] }}</p>
                     </div>
@@ -83,7 +90,7 @@
         @if ($section->type === 'quote')
             <div class="grid-2" style="align-items: center;">
                 @if ($image)
-                    <img src="{{ asset($image) }}" alt="" loading="lazy" style="width: 100%; aspect-ratio: 4/3; object-fit: cover; border: 1px solid var(--border);">
+                    <img src="{{ $image }}" alt="" loading="lazy" style="width: 100%; aspect-ratio: 4/3; object-fit: cover; border: 1px solid var(--border);">
                 @endif
                 <blockquote style="border-left: 3px solid var(--green); padding-left: 24px;">
                     <p style="font-size: 17px; line-height: 1.7;">{{ $d['quote'] }}</p>
@@ -122,6 +129,9 @@
                 @if ($kicker)<span class="kicker">{{ $kicker }}</span>@endif
                 @if ($title)<h2 class="h-section">{{ $title }}</h2>@endif
             </div>
+            @if ($image)
+                <div style="max-width: 880px; margin: 0 auto 32px;">{!! $imageBanner($image) !!}</div>
+            @endif
             @if (!empty($logos))
                 <div class="logo-marquee" aria-label="Logos de nos partenaires">
                     <div class="logo-track">
@@ -131,7 +141,7 @@
                         @for ($copy = 0; $copy < 2; $copy++)
                             <div class="logo-group" @if ($copy === 1) aria-hidden="true" @endif>
                                 @foreach ($logos as $logo)
-                                    <span class="logo-item"><img src="{{ asset($logo) }}" alt="" loading="lazy"></span>
+                                    <span class="logo-item"><img src="{{ \App\Support\Media::url($logo) }}" alt="" loading="lazy"></span>
                                 @endforeach
                             </div>
                         @endfor
@@ -147,7 +157,7 @@
             <div class="gallery-grid">
                 @foreach ($images as $img)
                     <figure class="gallery-item">
-                        <img src="{{ asset($img) }}" alt="" loading="lazy" data-lightbox>
+                        <img src="{{ \App\Support\Media::url($img) }}" alt="" loading="lazy" data-lightbox>
                     </figure>
                 @endforeach
             </div>

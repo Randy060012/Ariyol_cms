@@ -144,7 +144,7 @@ class BlogTest extends TestCase
         $this->actingAs($admin)->put(route('admin.posts.update', $post), [
             'title' => 'Article existant modifié',
             'is_published' => '1',
-            'gallery_remove' => ['0' => '1'],
+            'gallery_remove' => ['0'],
         ])->assertRedirect(route('admin.posts.edit', $post));
 
         $post->refresh();

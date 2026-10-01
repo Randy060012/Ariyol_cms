@@ -207,7 +207,12 @@
         .hero p.lead { margin-top: 18px; }
         .hero-actions { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 34px; }
 
-        .page-hero { background: var(--navy); color: var(--white); padding: clamp(72px, 10vw, 112px) 0; border-bottom: 4px solid var(--green); }
+        .page-hero {
+            background: var(--navy) center / cover no-repeat;
+            color: var(--white);
+            padding: clamp(72px, 10vw, 112px) 0;
+            border-bottom: 4px solid var(--green);
+        }
         .page-hero p { color: #b9c8dc; margin-top: 12px; max-width: 60ch; }
 
         /* Pages d'erreur : même traitement visuel que le hero, sans image de fond. */
@@ -233,6 +238,15 @@
         .rule-card.green-top { border-top-color: var(--green); }
         .rule-card h3 { font-size: 18px; margin-bottom: 10px; }
         .rule-card p { font-size: 14px; color: var(--muted); }
+
+        /* Photo d'une carte : elle occupe la largeur de la carte et remplace
+           son padding haut, pour que l'image affleure les bords. */
+        .card-media {
+            margin: -30px -28px 22px;
+            border-bottom: 1px solid var(--border);
+            background: var(--paper);
+        }
+        .card-media img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
 
         .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(32px, 5vw, 64px); align-items: start; }
@@ -339,6 +353,18 @@
             background: var(--white);
         }
         .gallery-item img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+
+        /* ============ GALERIE DE L'EN-TÊTE DE PAGE ============ */
+        .hero-gallery { background: var(--white); border-bottom: 1px solid var(--border); }
+        .hero-gallery-track {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1px;
+            background: var(--border);
+            border-inline: 1px solid var(--border);
+        }
+        .hero-gallery-item { margin: 0; background: var(--white); }
+        .hero-gallery-item img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
 
         /* ============ LIGHTBOX ============ */
         .lightbox {
@@ -459,7 +485,7 @@
         /* ============ RESPONSIVE ============ */
         @media (max-width: 1024px) {
             .grid-3 { grid-template-columns: repeat(2, 1fr); }
-            .media-strip, .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+            .media-strip, .gallery-grid, .hero-gallery-track { grid-template-columns: repeat(2, 1fr); }
             .footer-grid { grid-template-columns: 1fr 1fr; }
         }
 
@@ -494,7 +520,7 @@
         }
 
         @media (max-width: 640px) {
-            .grid-3, .media-strip, .gallery-grid { grid-template-columns: 1fr; }
+            .grid-3, .media-strip, .gallery-grid, .hero-gallery-track { grid-template-columns: 1fr; }
             .footer-grid { grid-template-columns: 1fr; }
             .hero-actions .btn { width: 100%; justify-content: center; }
             .logo-item img { height: 44px; }

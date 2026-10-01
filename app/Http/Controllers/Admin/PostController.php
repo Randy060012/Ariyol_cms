@@ -2,15 +2,23 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\HandlesMediaUploads;
 use App\Http\Controllers\Controller;
 use App\Models\Post;
+use App\Support\Media;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class PostController extends Controller
 {
+    use HandlesMediaUploads;
+
+    /**
+     * Storage folder for the images of an article.
+     */
+    private const POST_FOLDER = 'posts';
+
     public function index(): View
     {
         $posts = Post::query()
@@ -23,15 +31,15 @@ class PostController extends Controller
     public function create(): View
     {
         return view('admin.posts.form', [
-            'post' => new Post(),
+            'post' => new Post,
             'action' => route('admin.posts.store'),
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
-        // Validate files first so a rejected upload never persists a partial article.
-        $this->validateImages($request);
+        // Validate uploads first so a rejected file never persists a partial article.
+        $this->validateImageUploads($request);
 
         $data = $this->validated($request);
 
@@ -39,7 +47,7 @@ class PostController extends Controller
 
         $post = Post::create($data);
 
-        $this->handleImages($request, $post);
+        $this->handleImageUploads($request, $post);
 
         return redirect()
             ->route('admin.posts.edit', $post)
@@ -56,6 +64,8 @@ class PostController extends Controller
 
     public function update(Request $request, Post $post): RedirectResponse
     {
+        $this->validateImageUploads($request);
+
         $data = $this->validated($request);
 
         $data['slug'] = Post::uniqueSlug(
@@ -65,7 +75,7 @@ class PostController extends Controller
 
         $post->update($data);
 
-        $this->handleImages($request, $post);
+        $this->handleImageUploads($request, $post);
 
         return redirect()
             ->route('admin.posts.edit', $post)
@@ -74,8 +84,7 @@ class PostController extends Controller
 
     public function destroy(Post $post): RedirectResponse
     {
-        $this->deleteStored($post->main_image);
-        $this->deleteStoredAll($post->galleryImages());
+        Media::deleteStoredAll(array_merge([$post->main_image], $post->galleryImages()));
 
         $post->delete();
 
@@ -95,7 +104,6 @@ class PostController extends Controller
             'slug' => ['nullable', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
             'excerpt' => ['nullable', 'string', 'max:500'],
             'content' => ['nullable', 'string', 'max:60000'],
-            'main_image' => ['nullable', 'string', 'max:1000'],
             'author' => ['nullable', 'string', 'max:120'],
             'category' => ['nullable', 'string', 'max:80'],
             'is_published' => ['nullable', 'boolean'],
@@ -104,103 +112,44 @@ class PostController extends Controller
             'is_published' => $request->boolean('is_published'),
         ];
 
-        // Never let the text field wipe the stored main image.
-        unset($data['main_image']);
-
+        // The main image is resolved by the upload pipeline, never by the text field.
         return $data;
     }
-
-    /* ------------------------------------------------------------------
-     |  Image lifecycle: main image + gallery
-     * ------------------------------------------------------------------ */
 
     /**
      * Validate both image inputs up front (store and update share these rules).
      */
-    private function validateImages(Request $request): void
+    private function validateImageUploads(Request $request): void
     {
+        $this->validateSingleUpload($request, 'main_image_file');
+
         $request->validate([
-            'main_image_file' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,svg', 'max:4096'],
             'gallery_files' => ['nullable', 'array', 'max:12'],
-            'gallery_files.*' => ['image', 'mimes:jpg,jpeg,png,webp,svg', 'max:4096'],
+            'gallery_files.*' => Media::uploadRules(),
         ]);
     }
 
-    private function handleImages(Request $request, Post $post): void
-    {
-        $this->handleMainImage($request, $post);
-        $this->handleGallery($request, $post);
-    }
-
     /**
-     * Main image: upload wins, remove-checkbox clears it, otherwise preserved.
+     * Main image + gallery of an article.
      */
-    private function handleMainImage(Request $request, Post $post): void
+    private function handleImageUploads(Request $request, Post $post): void
     {
-        if ($request->hasFile('main_image_file')) {
-            $this->deleteStored($post->main_image);
-
-            $path = $request->file('main_image_file')->store('posts', 'public');
-            $post->forceFill(['main_image' => 'storage/'.$path])->save();
-
-            return;
-        }
-
-        if ($request->boolean('remove_main_image')) {
-            $this->deleteStored($post->main_image);
-            $post->forceFill(['main_image' => null])->save();
-        }
-
-        // No upload, no removal: keep the current image.
-    }
-
-    /**
-     * Gallery: appends uploaded files, honors per-image removal checkboxes
-     * (gallery_remove[<index>]) and preserves untouched existing entries.
-     */
-    private function handleGallery(Request $request, Post $post): void
-    {
-        $existing = $post->galleryImages();
-        $remove = (array) $request->input('gallery_remove', []);
-
-        $kept = [];
-
-        foreach ($existing as $index => $path) {
-            if (isset($remove[$index])) {
-                $this->deleteStored($path);
-                continue;
-            }
-
-            $kept[] = $path;
-        }
-
-        if ($request->hasFile('gallery_files')) {
-            foreach ($request->file('gallery_files') as $file) {
-                $path = $file->store('posts', 'public');
-                $kept[] = 'storage/'.$path;
-            }
-        }
-
-        $post->forceFill(['gallery' => $kept])->save();
-    }
-
-    /* ------------------------------------------------------------------
-     |  Storage helpers (external URLs and bundled assets are never touched)
-     * ------------------------------------------------------------------ */
-
-    private function deleteStored(?string $value): void
-    {
-        if (! is_string($value) || ! str_starts_with($value, 'storage/')) {
-            return;
-        }
-
-        Storage::disk('public')->delete(substr($value, strlen('storage/')));
-    }
-
-    private function deleteStoredAll(array $values): void
-    {
-        foreach ($values as $value) {
-            $this->deleteStored($value);
-        }
+        $post->forceFill([
+            'main_image' => $this->resolveImage(
+                $request,
+                'main_image_file',
+                'remove_main_image',
+                $post->main_image,
+                self::POST_FOLDER,
+                'main_image',
+            ),
+            'gallery' => $this->resolveGallery(
+                $request,
+                'gallery_files',
+                'gallery_remove',
+                $post->galleryImages(),
+                self::POST_FOLDER,
+            ),
+        ])->save();
     }
 }

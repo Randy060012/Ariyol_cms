@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\HandlesMediaUploads;
 use App\Http\Controllers\Controller;
 use App\Models\Page;
 use App\Models\Section;
 use App\Services\PageRendererService;
+use App\Support\Media;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class SectionController extends Controller
 {
+    use HandlesMediaUploads;
+
     public function store(Request $request, Page $page): RedirectResponse
     {
         $validated = $request->validate([
@@ -32,13 +36,12 @@ class SectionController extends Controller
     public function edit(Page $page, Section $section): View
     {
         $fields = PageRendererService::sectionTypeFields($section->type);
-        $imageField = $this->imageField($section->type);
 
         return view('admin.sections.form', [
             'page' => $page,
             'section' => $section,
             'fields' => $fields,
-            'imageField' => $imageField,
+            'itemImagesAllowed' => PageRendererService::supportsItemImages($section->type),
             'action' => route('admin.sections.update', [$page, $section]),
         ]);
     }
@@ -46,26 +49,42 @@ class SectionController extends Controller
     public function update(Request $request, Page $page, Section $section): RedirectResponse
     {
         $fields = PageRendererService::sectionTypeFields($section->type);
-        $imageField = $this->imageField($section->type);
 
-        $rules = [];
-        foreach ($fields as $field => $config) {
-            $rules["data.{$field}"] = ['nullable', 'string', 'max:6000'];
+        $data = PageRendererService::buildData($section->type, $this->validated($request, $fields));
+
+        // Single images (one per section type).
+        foreach (PageRendererService::imageFields($section->type) as $field) {
+            $data[$field] = $this->resolveImage(
+                $request,
+                "data_file_{$field}",
+                "remove_{$field}",
+                $section->field($field),
+                PageRendererService::SECTION_FOLDER,
+                "data.{$field}",
+            );
         }
 
-        $validated = $request->validate($rules);
+        // Galleries multi-images (logos partenaires, images de section, ...).
+        foreach (PageRendererService::galleryFields($section->type) as $field) {
+            $data[$field] = $this->resolveGallery(
+                $request,
+                "data_file_{$field}",
+                "remove_{$field}",
+                $section->gallery($field),
+                PageRendererService::SECTION_FOLDER,
+            );
+        }
 
-        $data = PageRendererService::buildData($section->type, $validated['data'] ?? []);
-
-        $this->handleImage($request, $section, $data, $imageField);
-
-        // Galeries multi-images (logos partenaires, images de section, ...).
-        foreach ($this->galleryFields($section->type) as $galleryField) {
-            $this->handleGallery($request, $section, $data, $galleryField);
+        // Photo par carte.
+        if (PageRendererService::supportsItemImages($section->type)) {
+            $data['items'] = PageRendererService::attachItemImages(
+                $data['items'] ?? [],
+                $this->resolveItemImages($request, $section),
+            );
         }
 
         $section->update([
-            'data' => $data,
+            'data' => $this->prune($data),
             'is_visible' => $request->boolean('is_visible'),
         ]);
 
@@ -76,142 +95,13 @@ class SectionController extends Controller
 
     public function destroy(Page $page, Section $section): RedirectResponse
     {
+        Media::deleteStoredAll($section->storedMedia());
+
         $section->delete();
 
         return redirect()
             ->route('admin.pages.edit', $page)
             ->with('success', 'Section supprimée.');
-    }
-
-    /**
-     * Name of the image field for a section type, if any.
-     */
-    private function imageField(string $type): ?string
-    {
-        foreach (PageRendererService::sectionTypeFields($type) as $name => $config) {
-            if (($config['type'] ?? 'text') === 'image') {
-                return $name;
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Resolve the image value for storage, handling the three cases:
-     * - a file is uploaded: store it and replace the previous one;
-    * - the removal checkbox is checked: delete the current image;
-     * - otherwise: keep the current image (uploads must not be lost when
-     *   the admin edits other fields without re-selecting a file).
-     */
-    private function handleImage(Request $request, Section $section, array &$data, ?string $imageField): void
-    {
-        if ($imageField === null) {
-            return;
-        }
-
-        $current = $section->field($imageField);
-
-        if ($request->hasFile("data_file_{$imageField}")) {
-            $request->validate([
-                "data_file_{$imageField}" => ['image', 'mimes:jpg,jpeg,png,webp,svg', 'max:4096'],
-            ]);
-
-            $this->deleteStoredImage($current);
-
-            $path = $request->file("data_file_{$imageField}")->store('sections', 'public');
-            $data[$imageField] = 'storage/'.$path;
-
-            return;
-        }
-
-        if ($request->boolean("remove_{$imageField}")) {
-            $this->deleteStoredImage($current);
-            $data[$imageField] = null;
-
-            return;
-        }
-
-        // No upload, no removal: preserve the existing image, if any.
-        if (is_string($current) && $current !== '') {
-            $data[$imageField] = $current;
-        }
-    }
-
-    /**
-     * Names of the multi-image (gallery) fields for a section type, if any.
-     */
-    private function galleryFields(string $type): array
-    {
-        $fields = [];
-
-        foreach (PageRendererService::sectionTypeFields($type) as $name => $config) {
-            if (($config['type'] ?? 'text') === 'gallery') {
-                $fields[] = $name;
-            }
-        }
-
-        return $fields;
-    }
-
-    /**
-     * Resolve a gallery value (array of image paths) for storage, handling
-     * the three cases:
-     * - files are uploaded: store each one and append them to the gallery;
-     * - images are checked for removal: delete them from storage;
-     * - otherwise: keep the current images (uploads must not be lost when
-     *   the admin edits other fields without re-selecting files).
-     */
-    private function handleGallery(Request $request, Section $section, array &$data, string $field): void
-    {
-        $current = $section->field($field, []);
-
-        if (! is_array($current)) {
-            $current = [];
-        }
-
-        // Remove the images checked in the form (identified by their index).
-        $removed = array_map('intval', (array) $request->input("remove_{$field}", []));
-        $kept = [];
-
-        foreach ($current as $index => $path) {
-            if (in_array($index, $removed, true)) {
-                $this->deleteStoredImage($path);
-
-                continue;
-            }
-
-            $kept[] = $path;
-        }
-
-        // Append newly uploaded images, after validating each file.
-        if ($request->hasFile("data_file_{$field}")) {
-            $request->validate([
-                "data_file_{$field}" => ['array'],
-                "data_file_{$field}.*" => ['image', 'mimes:jpg,jpeg,png,webp,svg', 'max:4096'],
-            ]);
-
-            foreach ($request->file("data_file_{$field}") as $file) {
-                $kept[] = 'storage/'.$file->store('sections', 'public');
-            }
-        }
-
-        if ($kept !== []) {
-            $data[$field] = $kept;
-        }
-    }
-
-    /**
-     * Delete a previously uploaded image from the public disk (leaves
-     * external URLs and bundled assets untouched).
-     */
-    private function deleteStoredImage(?string $value): void
-    {
-        if (! is_string($value) || ! str_starts_with($value, 'storage/')) {
-            return;
-        }
-
-        \Illuminate\Support\Facades\Storage::disk('public')->delete(substr($value, strlen('storage/')));
     }
 
     public function move(Request $request, Page $page, Section $section): RedirectResponse
@@ -233,5 +123,78 @@ class SectionController extends Controller
         return redirect()
             ->route('admin.pages.edit', $page)
             ->with('success', 'Ordre des sections modifié.');
+    }
+
+    /**
+     * Validate the text fields of a section, per its type.
+     */
+    private function validated(Request $request, array $fields): array
+    {
+        $rules = [];
+
+        foreach ($fields as $field => $config) {
+            $type = $config['type'] ?? PageRendererService::FIELD_TEXT;
+
+            // Image and gallery fields are handled by the upload pipeline.
+            if (in_array($type, [PageRendererService::FIELD_IMAGE, PageRendererService::FIELD_GALLERY], true)) {
+                continue;
+            }
+
+            $rules["data.{$field}"] = $type === PageRendererService::FIELD_NUMBER
+                ? ['nullable', 'integer', 'in:1,2,3']
+                : ['nullable', 'string', 'max:20000'];
+        }
+
+        return $request->validate($rules)['data'] ?? [];
+    }
+
+    /**
+     * Resolve the photos attached to individual cards, indexed by position.
+     *
+     * @return array<int, string>
+     */
+    private function resolveItemImages(Request $request, Section $section): array
+    {
+        $current = $section->itemImages();
+        $images = [];
+
+        foreach ($section->items() as $index => $item) {
+            $fileKey = "data_item_image_{$index}";
+            $removeKey = "remove_item_image_{$index}";
+
+            $existing = $current[$index] ?? null;
+
+            if ($request->hasFile($fileKey)) {
+                $this->validateSingleUpload($request, $fileKey);
+
+                Media::deleteStored($existing);
+                $images[$index] = Media::store($request->file($fileKey), PageRendererService::SECTION_FOLDER);
+
+                continue;
+            }
+
+            if ($request->boolean($removeKey)) {
+                Media::deleteStored($existing);
+
+                continue;
+            }
+
+            if ($existing !== null) {
+                $images[$index] = $existing;
+            }
+        }
+
+        return $images;
+    }
+
+    /**
+     * Drop empty values so the JSON payload stays light and predictable.
+     */
+    private function prune(array $data): array
+    {
+        return array_filter(
+            $data,
+            fn ($value) => $value !== null && $value !== '' && $value !== []
+        );
     }
 }
