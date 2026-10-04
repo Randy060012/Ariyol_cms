@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use App\Models\Page;
 use App\Models\Post;
+use App\Models\Realisation;
 use App\Models\Section;
 use App\Models\Setting;
 use Illuminate\View\View;
@@ -18,6 +19,7 @@ class DashboardController extends Controller
             'pagesCount' => Page::count(),
             'sectionsCount' => Section::count(),
             'postsCount' => Post::count(),
+            'realisationsCount' => Realisation::tableExists() ? Realisation::count() : 0,
             'settingsCount' => Setting::count(),
             'unreadMessages' => Contact::where('is_read', false)->count(),
             'totalMessages' => Contact::count(),

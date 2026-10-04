@@ -5,11 +5,13 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\MessageController;
 use App\Http\Controllers\Admin\PageController;
 use App\Http\Controllers\Admin\PostController;
+use App\Http\Controllers\Admin\RealisationController;
 use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Font\BlogController;
 use App\Http\Controllers\Font\CmsPageController;
 use App\Http\Controllers\Font\ContactController;
+use App\Http\Controllers\SitemapController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -31,6 +33,9 @@ Route::post('/contact', [ContactController::class, 'submitContact'])->name('cont
 // Blog
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{post:slug}', [BlogController::class, 'show'])->name('blog.show');
+
+// Sitemap XML (doit rester avant le catch-all des pages CMS)
+Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 
 /*
 |--------------------------------------------------------------------------
@@ -62,6 +67,10 @@ Route::prefix('admin')->middleware('admin.auth')->group(function () {
 
     Route::resource('posts', PostController::class)
         ->names('admin.posts')
+        ->except(['show']);
+
+    Route::resource('realisations', RealisationController::class)
+        ->names('admin.realisations')
         ->except(['show']);
 
     Route::get('/messages', [MessageController::class, 'index'])->name('admin.messages.index');

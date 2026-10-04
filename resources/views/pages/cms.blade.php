@@ -2,6 +2,12 @@
 
 @section('title', $metaTitle)
 
+@section('og_title', $metaTitle)
+@section('og_description', $metaDescription ?? '')
+@if ($page->hero_image)
+    @section('og_image', asset($page->hero_image))
+@endif
+
 @section('content')
 
     @php

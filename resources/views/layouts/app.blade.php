@@ -3,8 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="AFRIYOL - African Young Leaders : organisation non gouvernementale dédiée aux Droits Humains, à la Paix, à l'Environnement et au Leadership des Jeunes au Togo.">
+
+    @php
+        /*
+         | SEO & partage social : meta description, canonical, OpenGraph,
+         | Twitter Cards et JSON-LD (schema.org/NGO).
+         |
+         | Chaque page peut surcharger ces sections : og_title, og_description,
+         | og_image, og_type, og_published_time. Sans surcharge, les valeurs
+         | par défaut du site sont utilisées.
+         |
+         | NB : les sections sont lues via $__env->yieldContent() car les
+         | directives Blade ne sont pas compilées à l'intérieur d'un @php.
+         */
+        $defaultDescription = "AFRIYOL - African Young Leaders : organisation non gouvernementale dédiée aux Droits Humains, à la Paix, à l'Environnement et au Leadership des Jeunes au Togo.";
+
+        $ogSiteName = $siteHeader['brand_name'] ?? 'AFRIYOL';
+
+        /*
+         | Les sections inline sont échappées (e()) au moment de leur capture :
+         | on les affiche donc telles quelles avec {!! !!} dans les balises meta,
+         | et on n'échappe (e()) que les valeurs par défaut calculées ici.
+         */
+        $seoDescription = trim((string) $__env->yieldContent('og_description'))
+            ?: e($defaultDescription);
+
+        $ogTitle = trim((string) $__env->yieldContent('og_title'))
+            ?: trim((string) $__env->yieldContent('title', e($ogSiteName.' - African Young Leaders')));
+
+        // Image de partage par défaut : raster (les plateformes ignorent le SVG).
+        $ogImage = trim((string) $__env->yieldContent('og_image'))
+            ?: e(asset('images/afriyol.png'));
+
+        $ogType = trim((string) $__env->yieldContent('og_type')) ?: 'website';
+        $ogPublishedTime = trim((string) $__env->yieldContent('og_published_time'));
+        $seoUrl = url()->current();
+
+        // @twitter:site déduit du lien X (Twitter) des réglages du site.
+        $twitterHandle = '';
+        $twitterPath = parse_url((string) ($siteFooter['twitter'] ?? ''), PHP_URL_PATH);
+        if (is_string($twitterPath) && trim($twitterPath, '/') !== '') {
+            $twitterHandle = '@'.trim($twitterPath, '/');
+        }
+
+        // Identité de l'organisation (schema.org/NGO), alimentée par les réglages.
+        $logoPath = (string) ($siteHeader['logo'] ?? 'images/logo.svg');
+        $orgSchema = array_filter([
+            '@context' => 'https://schema.org',
+            '@type' => 'NGO',
+            'name' => $ogSiteName,
+            'alternateName' => $siteHeader['brand_tagline'] ?? null,
+            'url' => url('/'),
+            'logo' => str_ends_with($logoPath, '.svg') ? asset('images/afriyol.png') : asset($logoPath),
+            'description' => $siteFooter['description'] ?? null,
+            'email' => $siteFooter['email'] ?? null,
+            'address' => [
+                '@type' => 'PostalAddress',
+                'streetAddress' => $siteFooter['address'] ?? null,
+                'addressCountry' => 'TG',
+            ],
+            'sameAs' => array_values(array_filter([
+                $siteFooter['linkedin'] ?? null,
+                $siteFooter['facebook'] ?? null,
+                $siteFooter['twitter'] ?? null,
+            ])),
+        ], fn ($value) => $value !== null && $value !== []);
+
+        // JSON inséré dans un <script> : échapper < > & ' " pour éviter toute injection.
+        $jsonFlags = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+            | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP;
+    @endphp
+
+    <meta name="description" content="{!! $seoDescription !!}">
+    <link rel="canonical" href="{{ $seoUrl }}">
     <title>@yield('title', 'AFRIYOL - African Young Leaders')</title>
+
+    {{-- OpenGraph --}}
+    <meta property="og:site_name" content="{{ $ogSiteName }}">
+    <meta property="og:type" content="{{ $ogType }}">
+    <meta property="og:title" content="{!! $ogTitle !!}">
+    <meta property="og:description" content="{!! $seoDescription !!}">
+    <meta property="og:url" content="{{ $seoUrl }}">
+    <meta property="og:image" content="{{ $ogImage }}">
+    <meta property="og:locale" content="fr_FR">
+    @if ($ogType === 'article' && $ogPublishedTime !== '')
+        <meta property="article:published_time" content="{!! $ogPublishedTime !!}">
+    @endif
+
+    {{-- Twitter Cards --}}
+    <meta name="twitter:card" content="summary_large_image">
+    @if ($twitterHandle !== '')
+        <meta name="twitter:site" content="{{ $twitterHandle }}">
+    @endif
+    <meta name="twitter:title" content="{!! $ogTitle !!}">
+    <meta name="twitter:description" content="{!! $seoDescription !!}">
+    <meta name="twitter:image" content="{!! $ogImage !!}">
+
+    {{-- JSON-LD : identité de l'organisation (NGO) --}}
+    <script type="application/ld+json">@json($orgSchema, $jsonFlags)</script>
 
     <link rel="icon" href="{{ asset('favicon.ico') }}">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -323,6 +419,44 @@
         }
         @media (prefers-reduced-motion: reduce) {
             .logo-track { animation: none; flex-wrap: wrap; justify-content: center; width: auto; }
+        }
+
+        /* ============ REALISATIONS (PHOTO A GAUCHE, TEXTE A DROITE) ============ */
+        .realisation-list { display: grid; gap: clamp(28px, 4vw, 44px); }
+        .realisation-row {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+            align-items: stretch;
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .realisation-media { position: relative; min-height: 260px; background: var(--navy); }
+        .realisation-media > img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .realisation-placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--navy);
+        }
+        .realisation-placeholder img { width: 88px; height: auto; opacity: .9; }
+        .realisation-body { padding: clamp(22px, 3vw, 38px) clamp(22px, 3.5vw, 44px); align-self: center; }
+        .realisation-body h3 { font-size: 21px; margin-bottom: 10px; color: var(--navy); }
+        .realisation-body p { font-size: 15px; color: var(--muted); }
+
+        @media (max-width: 860px) {
+            .realisation-row { grid-template-columns: 1fr; }
+            /* Mobile : la photo passe au-dessus du texte. */
+            .realisation-media { min-height: 0; aspect-ratio: 16 / 9; }
         }
 
         /* ============ GALERIES D'IMAGES DE SECTION ============ */

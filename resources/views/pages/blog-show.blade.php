@@ -2,6 +2,14 @@
 
 @section('title', $post->title.' | Blog AFRIYOL')
 
+@section('og_type', 'article')
+@section('og_title', $post->title)
+@section('og_description', $metaDescription ?? '')
+@if ($post->main_image)
+    @section('og_image', asset($post->main_image))
+@endif
+@section('og_published_time', $post->created_at?->toISOString() ?? '')
+
 @section('content')
 
     <section class="page-hero">
@@ -64,6 +72,31 @@
 
         </div>
     </section>
+
+    {{-- JSON-LD : article de blog (schema.org/BlogPosting) --}}
+    @php
+        $postSchema = array_filter([
+            '@context' => 'https://schema.org',
+            '@type' => 'BlogPosting',
+            'headline' => $post->title,
+            'description' => $post->excerpt ?: null,
+            'image' => $post->main_image ? asset($post->main_image) : null,
+            'datePublished' => $post->created_at?->toISOString(),
+            'dateModified' => $post->updated_at?->toISOString(),
+            'author' => ['@type' => 'Organization', 'name' => $post->author ?: 'AFRIYOL'],
+            'publisher' => [
+                '@type' => 'Organization',
+                'name' => 'AFRIYOL',
+                'logo' => ['@type' => 'ImageObject', 'url' => asset('images/afriyol.png')],
+            ],
+            'mainEntityOfPage' => url()->current(),
+        ], fn ($value) => $value !== null);
+
+        // JSON inséré dans un <script> : échapper < > & ' " pour éviter toute injection.
+        $jsonFlags = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
+            | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP;
+    @endphp
+    <script type="application/ld+json">@json($postSchema, $jsonFlags)</script>
 
 @endsection
 

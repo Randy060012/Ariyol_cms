@@ -16,6 +16,7 @@ class PageRendererService
         'checklist' => 'Liste à puces',
         'quote' => 'Citation',
         'partners' => 'Logos partenaires (défilement)',
+        'realisations' => 'Réalisations (photo + texte)',
         'cta' => 'Appel à l\'action',
     ];
 
@@ -76,6 +77,13 @@ class PageRendererService
                 'kicker' => ['label' => 'Sur-titre', 'type' => 'text'],
                 'title' => ['label' => 'Titre', 'type' => 'text'],
                 'logos' => ['label' => 'Logos des partenaires', 'type' => 'gallery'],
+            ],
+            'realisations' => [
+                'kicker' => ['label' => 'Sur-titre', 'type' => 'text'],
+                'title' => ['label' => 'Titre', 'type' => 'text'],
+                'limit' => ['label' => 'Nombre de réalisations à afficher (vide = toutes)', 'type' => 'number'],
+                'button_label' => ['label' => 'Libellé du bouton (facultatif)', 'type' => 'text'],
+                'button_url' => ['label' => 'Lien du bouton', 'type' => 'text'],
             ],
             'cta' => [
                 'kicker' => ['label' => 'Sur-titre', 'type' => 'text'],

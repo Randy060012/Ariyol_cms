@@ -94,6 +94,60 @@
             </div>
         @endif
 
+        @if ($section->type === 'realisations')
+            {{--
+                Réalisations : chaque action est affichée en ligne avec la
+                photo à gauche et le texte à droite. Le contenu vient des
+                « Réalisations » gérées depuis l'administration ; la section
+                contrôle le titre, le nombre affiché et un bouton facultatif.
+            --}}
+            @php
+                $realisations = \App\Models\Realisation::forDisplay((int) ($d['limit'] ?? 0));
+            @endphp
+
+            @if ($kicker || $title)
+                <div class="section-head">
+                    @if ($kicker)<span class="kicker">{{ $kicker }}</span>@endif
+                    @if ($title)<h2 class="h-section">{{ $title }}</h2>@endif
+                </div>
+            @endif
+
+            @if ($realisations->isEmpty())
+                <p class="muted small">Les réalisations seront affichées ici dès leur ajout depuis l'administration.</p>
+            @else
+                <div class="realisation-list">
+                    @foreach ($realisations as $realisation)
+                        <article class="realisation-row">
+                            <div class="realisation-media">
+                                @if ($realisation->image)
+                                    <img src="{{ asset($realisation->image) }}" alt="{{ $realisation->title }}" loading="lazy" data-lightbox>
+                                @else
+                                    <div class="realisation-placeholder" aria-hidden="true">
+                                        <img src="{{ asset('images/logo.svg') }}" alt="" loading="lazy">
+                                    </div>
+                                @endif
+                            </div>
+                            <div class="realisation-body">
+                                @if ($realisation->date || $realisation->location)
+                                    <span class="kicker">{{ $realisation->formattedDate() }}@if ($realisation->formattedDate() && $realisation->location) &mdash; @endif{{ $realisation->location }}</span>
+                                @endif
+                                <h3>{{ $realisation->title }}</h3>
+                                @if ($realisation->description)
+                                    <p>{{ $realisation->description }}</p>
+                                @endif
+                            </div>
+                        </article>
+                    @endforeach
+                </div>
+            @endif
+
+            @if (!empty($d['button_label']))
+                <p style="text-align: center; margin-top: 36px;">
+                    <a href="{{ $d['button_url'] ?? '/realisations' }}" class="btn btn-ghost">{{ $d['button_label'] }}</a>
+                </p>
+            @endif
+        @endif
+
         @if ($section->type === 'cta')
             <div class="section-head center">
                 @if ($kicker)<span class="kicker">{{ $kicker }}</span>@endif

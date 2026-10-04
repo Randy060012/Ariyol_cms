@@ -2,6 +2,9 @@
 
 @section('title', 'Blog - Actualités et articles | AFRIYOL')
 
+@section('og_title', "Le blog d'AFRIYOL")
+@section('og_description', "Actualités, retours d'expérience et coulisses des actions d'AFRIYOL sur le terrain.")
+
 @section('content')
 
     <section class="page-hero">

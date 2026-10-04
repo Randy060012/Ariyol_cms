@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Page;
 use App\Models\Post;
+use App\Models\Realisation;
 use App\Models\Section;
 use App\Models\Setting;
 use App\Models\User;
@@ -20,6 +21,7 @@ class DatabaseSeeder extends Seeder
         $this->seedSettings();
         $this->seedPages();
         $this->seedPosts();
+        $this->seedRealisations();
     }
 
     private function seedAdmin(): void
@@ -108,15 +110,14 @@ class DatabaseSeeder extends Seeder
                         'title' => 'Nos partenaires et collaborateurs',
                         'logos' => [], // Logos téléversés depuis l'administration (page Accueil).
                     ]],
-                    ['cards', [
-                        'kicker' => 'Activités récentes',
-                        'title' => 'Retours sur nos dernières actions',
-                        'columns' => '3',
-                        'items' => [
-                            ['title' => 'Journée Portes Ouvertes AFRIYOL', 'description' => '11 avril 2026 - Tsévié. Mobilisation des jeunes pour l\'engagement communautaire au centre IYF.'],
-                            ['title' => 'Opération Togo Propre', 'description' => '7 mars 2026 - Zio 1. Curage des caniveaux et sensibilisation à la salubrité publique.'],
-                            ['title' => 'Atelier Leadership & Art Oratoire', 'description' => '23 août 2025 - JOKO-TOGO. Formation du staff et des enfants de l\'orphelinat avec les UST.'],
-                        ],
+                    // Réalisations récentes (photo à gauche, texte à droite) :
+                    // contenu géré dans le menu « Réalisations » de l'administration.
+                    ['realisations', [
+                        'kicker' => 'Retours sur le terrain',
+                        'title' => 'Nos dernières réalisations',
+                        'limit' => '3',
+                        'button_label' => 'Voir toutes nos réalisations',
+                        'button_url' => '/realisations',
                     ]],
                     ['cta', [
                         'kicker' => 'Engagez-vous',
@@ -270,6 +271,13 @@ class DatabaseSeeder extends Seeder
                             ['title' => '16 juin 2025 - Journée de l\'Enfant Africain', 'description' => 'Sensibilisation sur l\'éducation et la protection de l\'enfance auprès de plus de 1 200 jeunes.'],
                         ],
                     ]],
+                    // Réalisations en photos (photo à gauche, texte à droite) :
+                    // contenu géré dans le menu « Réalisations » de l'administration.
+                    ['realisations', [
+                        'kicker' => 'En images',
+                        'title' => 'Nos actions de terrain',
+                        'limit' => '',
+                    ]],
                     ['cta', [
                         'kicker' => 'Prochaine étape',
                         'title' => 'Participez à la prochaine action',
@@ -362,6 +370,48 @@ class DatabaseSeeder extends Seeder
                 ['slug' => $post['slug']],
                 $post + ['is_published' => true, 'sort_order' => $index]
             );
+        }
+    }
+
+    /**
+     * Sample realisations (photo + texte) so the public pages are not empty
+     * on a fresh install. Photos are added later from the administration.
+     */
+    private function seedRealisations(): void
+    {
+        if (Realisation::query()->exists()) {
+            return; // Ne pas écraser les réalisations créées via l'admin
+        }
+
+        $realisations = [
+            [
+                'title' => 'Opération « Togo Propre » à Tsévié',
+                'description' => 'Plus de 300 volontaires mobilisés avec la Mairie Zio 1 pour le curage des caniveaux et la collecte des déchets sur les axes principaux de la ville, accompagnés d\'une sensibilisation à l\'éco-citoyenneté.',
+                'date' => '2026-03-07',
+                'location' => 'Tsévié (Zio 1)',
+            ],
+            [
+                'title' => 'Suivi écologique des 500 plants de Zéglé-Sagonou',
+                'description' => 'Inspection trimestrielle des plants d\'arbres du programme de reboisement : taux de survie, arrosage et remplacement des plants fragiles, avec les volontaires du village.',
+                'date' => '2026-01-31',
+                'location' => 'Zéglé-Sagonou',
+            ],
+            [
+                'title' => 'Journée Portes Ouvertes au centre IYF',
+                'description' => 'Mobilisation de la jeunesse autour de l\'engagement communautaire : présentation des axes d\'intervention, ateliers d\'échanges et inscriptions des nouveaux bénévoles.',
+                'date' => '2026-04-11',
+                'location' => 'Tsévié',
+            ],
+            [
+                'title' => 'Atelier Leadership & Art Oratoire à JOKO-TOGO',
+                'description' => 'Formation du staff et des enfants de l\'orphelinat à la prise de parole en public et au débat, avec le soutien des Universités Sociales du Togo (UST).',
+                'date' => '2025-08-23',
+                'location' => 'Orphelinat JOKO-TOGO',
+            ],
+        ];
+
+        foreach ($realisations as $index => $realisation) {
+            Realisation::create($realisation + ['is_published' => true, 'sort_order' => $index]);
         }
     }
 }
