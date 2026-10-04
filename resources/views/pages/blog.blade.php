@@ -51,7 +51,7 @@
                 <article class="rule-card" style="margin-bottom: 32px;">
                     <a href="{{ route('blog.show', $featured) }}" style="display: grid; grid-template-columns: 1.1fr 1fr; gap: clamp(20px, 4vw, 40px); align-items: center;">
                         @if ($featured->main_image)
-                            <img src="{{ asset($featured->main_image) }}" alt="{{ $featured->title }}" loading="lazy" data-lightbox style="width: 100%; aspect-ratio: 16/10; object-fit: cover; border: 1px solid var(--border);">
+                            <img src="{{ \App\Support\Media::url($featured->main_image) }}" alt="{{ $featured->title }}" loading="lazy" data-lightbox style="width: 100%; aspect-ratio: 16/10; object-fit: cover; border: 1px solid var(--border);">
                         @endif
                         <div>
                             <span class="kicker">{{ $featured->category ?: 'À la une' }}</span>
@@ -72,7 +72,7 @@
                             <article class="rule-card {{ $loop->odd ? '' : 'green-top' }}">
                                 <a href="{{ route('blog.show', $post) }}" style="display: block;">
                                     @if ($post->main_image)
-                                        <img src="{{ asset($post->main_image) }}" alt="{{ $post->title }}" loading="lazy" data-lightbox style="width: 100%; aspect-ratio: 16/10; object-fit: cover; border: 1px solid var(--border); margin-bottom: 18px;">
+                                        <img src="{{ \App\Support\Media::url($post->main_image) }}" alt="{{ $post->title }}" loading="lazy" data-lightbox style="width: 100%; aspect-ratio: 16/10; object-fit: cover; border: 1px solid var(--border); margin-bottom: 18px;">
                                     @endif
                                     <span class="kicker">{{ $post->category ?: 'Actualité' }}</span>
                                     <h3>{{ $post->title }}</h3>

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Media;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Schema;
@@ -16,6 +17,7 @@ class Page extends Model
         'hero_title',
         'hero_subtitle',
         'hero_image',
+        'hero_images',
         'meta_title',
         'meta_description',
         'is_published',
@@ -25,6 +27,7 @@ class Page extends Model
     protected function casts(): array
     {
         return [
+            'hero_images' => 'array',
             'is_published' => 'boolean',
         ];
     }
@@ -37,6 +40,24 @@ class Page extends Model
     public function visibleSections(): HasMany
     {
         return $this->sections()->where('is_visible', true);
+    }
+
+    /**
+     * Hero gallery images without nulls, re-indexed.
+     */
+    public function heroGallery(): array
+    {
+        return Media::clean($this->hero_images);
+    }
+
+    /**
+     * Every uploaded file of the page hero, for cleanup on deletion.
+     *
+     * @return array<int, string|null>
+     */
+    public function heroMedia(): array
+    {
+        return array_merge([$this->hero_image], $this->heroGallery());
     }
 
     /**

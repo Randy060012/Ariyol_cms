@@ -2,15 +2,24 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Http\Controllers\Admin\Concerns\HandlesMediaUploads;
 use App\Http\Controllers\Controller;
 use App\Models\Page;
-use App\Services\PageRendererService;
+use App\Support\Media;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 class PageController extends Controller
 {
+    use HandlesMediaUploads;
+
+    /**
+     * Storage folder for the hero images of a page.
+     */
+    private const HERO_FOLDER = 'pages';
+
     public function index(): View
     {
         $pages = Page::query()
@@ -25,20 +34,23 @@ class PageController extends Controller
     public function create(): View
     {
         return view('admin.pages.form', [
-            'page' => new Page(),
+            'page' => new Page,
             'action' => route('admin.pages.store'),
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
+        // Validate uploads first so a rejected file never persists a partial page.
+        $this->validateHeroUploads($request);
+
         $data = $this->validated($request);
         $data['slug'] = $this->uniqueSlug($request->input('slug') ?: $request->input('title'));
         $data['page_key'] = $this->uniquePageKey($data['slug']);
 
         $page = Page::create($data);
 
-        $this->handleHeroUpload($request, $page);
+        $this->handleHeroUploads($request, $page);
 
         return redirect()
             ->route('admin.pages.edit', $page)
@@ -47,6 +59,8 @@ class PageController extends Controller
 
     public function edit(Page $page): View
     {
+        $page->load('sections');
+
         return view('admin.pages.form', [
             'page' => $page,
             'action' => route('admin.pages.update', $page),
@@ -55,6 +69,8 @@ class PageController extends Controller
 
     public function update(Request $request, Page $page): RedirectResponse
     {
+        $this->validateHeroUploads($request);
+
         $data = $this->validated($request);
         $data['slug'] = $this->uniqueSlug(
             $request->input('slug') ?: $request->input('title'),
@@ -63,7 +79,7 @@ class PageController extends Controller
 
         $page->update($data);
 
-        $this->handleHeroUpload($request, $page);
+        $this->handleHeroUploads($request, $page);
 
         return redirect()
             ->route('admin.pages.edit', $page)
@@ -76,6 +92,13 @@ class PageController extends Controller
             return back()->with('error', 'Les pages essentielles du site ne peuvent pas être supprimées.');
         }
 
+        Media::deleteStoredAll($page->heroMedia());
+
+        // Sections carry their own uploaded files.
+        foreach ($page->sections as $section) {
+            Media::deleteStoredAll($section->storedMedia());
+        }
+
         $page->delete();
 
         return redirect()
@@ -83,6 +106,9 @@ class PageController extends Controller
             ->with('success', 'Page supprimée.');
     }
 
+    /**
+     * Text fields of a page. Media fields are handled separately.
+     */
     private function validated(Request $request): array
     {
         return $request->validate([
@@ -91,7 +117,6 @@ class PageController extends Controller
             'hero_kicker' => ['nullable', 'string', 'max:255'],
             'hero_title' => ['nullable', 'string', 'max:255'],
             'hero_subtitle' => ['nullable', 'string', 'max:1000'],
-            'hero_image' => ['nullable', 'string', 'max:1000'],
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:1000'],
             'is_published' => ['nullable', 'boolean'],
@@ -99,6 +124,43 @@ class PageController extends Controller
         ]) + [
             'is_published' => $request->boolean('is_published'),
         ];
+    }
+
+    private function validateHeroUploads(Request $request): void
+    {
+        $this->validateSingleUpload($request, 'hero_image_file');
+
+        $request->validate([
+            'hero_gallery_files' => ['nullable', 'array', 'max:12'],
+            'hero_gallery_files.*' => Media::uploadRules(),
+        ]);
+    }
+
+    /**
+     * Hero cover image and hero gallery.
+     *
+     * Upload wins, removal checkbox clears, otherwise the current value is
+     * preserved so editing another field never drops an upload.
+     */
+    private function handleHeroUploads(Request $request, Page $page): void
+    {
+        $page->forceFill([
+            'hero_image' => $this->resolveImage(
+                $request,
+                'hero_image_file',
+                'remove_hero_image',
+                $page->hero_image,
+                self::HERO_FOLDER,
+                'hero_image',
+            ),
+            'hero_images' => $this->resolveGallery(
+                $request,
+                'hero_gallery_files',
+                'remove_hero_gallery',
+                $page->heroGallery(),
+                self::HERO_FOLDER,
+            ),
+        ])->save();
     }
 
     /**
@@ -119,7 +181,7 @@ class PageController extends Controller
 
     private function uniqueSlug(string $base, ?int $ignoreId = null): string
     {
-        $slug = \Illuminate\Support\Str::slug($base) ?: 'page';
+        $slug = Str::slug($base) ?: 'page';
         $original = $slug;
         $i = 2;
 
@@ -132,16 +194,5 @@ class PageController extends Controller
         }
 
         return $slug;
-    }
-
-    private function handleHeroUpload(Request $request, Page $page): void
-    {
-        if (! $request->hasFile('hero_image_file')) {
-            return;
-        }
-
-        $path = $request->file('hero_image_file')->store('pages', 'public');
-
-        $page->forceFill(['hero_image' => 'storage/'.$path])->save();
     }
 }

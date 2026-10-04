@@ -79,11 +79,9 @@
             </div>
 
             @if ($post->main_image)
-                <div style="margin: 8px 0 16px;">
-                    <img src="{{ asset($post->main_image) }}" alt="Image principale actuelle" style="max-height: 160px; border: 1px solid var(--border);">
-                </div>
-                <div class="field">
-                    <label>
+                <div class="media-current" style="margin: 8px 0 16px;">
+                    <img src="{{ \App\Support\Media::url($post->main_image) }}" alt="Image principale actuelle">
+                    <label style="font-weight: 400;">
                         <input type="checkbox" name="remove_main_image" value="1">
                         Supprimer l'image principale
                     </label>
@@ -96,15 +94,15 @@
             <p class="panel-sub">Images additionnelles affichées dans l'article. Sélection multiple possible.</p>
 
             @if ($post->galleryImages())
-                <div class="gallery-existing">
+                <div class="gallery-current">
                     @foreach ($post->galleryImages() as $index => $path)
-                        <figure>
-                            <img src="{{ asset($path) }}" alt="Image de galerie {{ $index + 1 }}">
-                            <label>
-                                <input type="checkbox" name="gallery_remove[{{ $index }}]" value="1">
+                        <div class="gallery-current-item">
+                            <img src="{{ \App\Support\Media::url($path) }}" alt="Image de galerie {{ $index + 1 }}">
+                            <label style="font-weight: 400;">
+                                <input type="checkbox" name="gallery_remove[]" value="{{ $index }}">
                                 Supprimer
                             </label>
-                        </figure>
+                        </div>
                     @endforeach
                 </div>
             @endif
@@ -158,12 +156,6 @@
         .filepond--item-panel { background-color: var(--navy); border-radius: 2px; }
         .filepond--file { color: var(--white); }
         .filepond--drip-blob { background-color: var(--green); }
-
-        /* Images existantes de la galerie */
-        .gallery-existing { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 18px; }
-        .gallery-existing figure { width: 150px; margin: 0; }
-        .gallery-existing img { width: 150px; height: 100px; object-fit: cover; border: 1px solid var(--border); }
-        .gallery-existing label { display: flex; gap: 6px; align-items: center; font-size: 12px; margin-top: 6px; font-weight: 400; }
     </style>
 @endpush
 

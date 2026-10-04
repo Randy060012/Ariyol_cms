@@ -11,13 +11,14 @@
 @section('content')
 
     @php
-        $heroImage = $page->hero_image;
+        $heroImage = \App\Support\Media::url($page->hero_image);
+        $heroGallery = $page->heroGallery();
         $isHome = $page->page_key === 'home';
         $isContact = $page->page_key === 'contact';
     @endphp
 
     @if ($isHome)
-        <section class="hero" @if ($heroImage) style="background-image: url('{{ asset($heroImage) }}');" @endif>
+        <section class="hero" @if ($heroImage) style="background-image: url('{{ $heroImage }}');" @endif>
             <div class="wrap">
                 @if ($page->hero_kicker)
                     <span class="hero-kicker">{{ $page->hero_kicker }}</span>
@@ -33,7 +34,7 @@
             </div>
         </section>
     @else
-        <section class="page-hero" @if ($heroImage) style="background-image: url('{{ asset($heroImage) }}');" @endif>
+        <section class="page-hero" @if ($heroImage) style="background-image: url('{{ $heroImage }}');" @endif>
             <div class="wrap">
                 <nav class="breadcrumbs" aria-label="Fil d'Ariane">
                     <a href="{{ route('home') }}">Accueil</a>
@@ -44,6 +45,21 @@
                 @if ($page->hero_subtitle)
                     <p>{{ $page->hero_subtitle }}</p>
                 @endif
+            </div>
+        </section>
+    @endif
+
+    {{-- Galerie de l'en-tête de page : photos optionnelles affichées sous le hero. --}}
+    @if (count($heroGallery))
+        <section class="hero-gallery" aria-label="Galerie de la page">
+            <div class="wrap">
+                <div class="hero-gallery-track">
+                    @foreach ($heroGallery as $img)
+                        <figure class="hero-gallery-item">
+                            <img src="{{ \App\Support\Media::url($img) }}" alt="" loading="lazy" data-lightbox>
+                        </figure>
+                    @endforeach
+                </div>
             </div>
         </section>
     @endif

@@ -160,6 +160,46 @@
             padding: 4px;
         }
 
+        /* Image unique currently stored for a field */
+        .media-current {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-top: 10px;
+        }
+        .media-current img {
+            max-height: 110px;
+            max-width: 220px;
+            object-fit: contain;
+            border: 1px solid var(--border);
+            background: var(--white);
+            padding: 4px;
+        }
+
+        /* Photo par carte, dans le formulaire de section */
+        .item-media-list { display: grid; gap: 14px; margin-top: 10px; }
+        .item-media {
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--navy);
+            border-radius: 2px;
+            padding: 14px 16px;
+            background: #f8fafc;
+        }
+        .item-media-head { font-size: 13.5px; color: var(--navy); margin-bottom: 10px; }
+        .item-media .media-current { margin-top: 0; margin-bottom: 12px; }
+
+        /* Vignette d'une section dans la liste de la page */
+        .section-thumb {
+            width: 64px;
+            height: 44px;
+            flex: none;
+            object-fit: cover;
+            border: 1px solid var(--border);
+            background: var(--white);
+        }
+        .section-summary { display: flex; align-items: center; gap: 14px; }
+        .section-summary-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
         /* Buttons */
         .btn {
             display: inline-flex;
