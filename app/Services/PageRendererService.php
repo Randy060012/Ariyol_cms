@@ -17,7 +17,10 @@ class PageRendererService
      */
     public const SECTION_TYPES = [
         'facts' => 'Chiffres clés',
+        'timeline' => 'Étapes et repères chronologiques',
         'cards' => 'Cartes de contenu',
+        'news' => 'Actualités / articles',
+        'engagement' => 'Actions pour s’engager',
         'checklist' => 'Liste à puces',
         'quote' => 'Citation',
         'partners' => 'Logos partenaires (défilement)',
@@ -28,7 +31,7 @@ class PageRendererService
     /**
      * Section types whose individual items can carry their own photo.
      */
-    public const ITEM_IMAGE_TYPES = ['cards'];
+    public const ITEM_IMAGE_TYPES = ['cards', 'engagement'];
 
     /**
      * Field types understood by the admin form renderer.
@@ -79,22 +82,48 @@ class PageRendererService
             'facts' => [
                 'kicker' => $kicker,
                 'title' => $title,
+                'lead' => ['label' => 'Texte d’introduction', 'type' => self::FIELD_TEXTAREA, 'rows' => 3],
                 'image' => $image,
                 'images' => $gallery,
                 'items' => ['label' => 'Éléments (un par ligne : Titre | Description)', 'type' => self::FIELD_TEXTAREA, 'rows' => 5],
             ],
-            'cards' => [
+            'cards', 'engagement' => [
                 'kicker' => $kicker,
                 'title' => $title,
+                'lead' => ['label' => 'Texte d’introduction', 'type' => self::FIELD_TEXTAREA, 'rows' => 3],
+                'button_label' => ['label' => 'Libellé du lien d’action', 'type' => self::FIELD_TEXT],
                 'image' => $image,
                 'images' => $gallery,
                 'columns' => ['label' => 'Colonnes (2 ou 3)', 'type' => self::FIELD_NUMBER],
-                'items' => ['label' => 'Cartes (une par ligne : Titre | Description)', 'type' => self::FIELD_TEXTAREA, 'rows' => 6],
+                'items' => ['label' => 'Cartes (une par ligne : Titre | Description | URL facultative | Libellé du lien facultatif)', 'type' => self::FIELD_TEXTAREA, 'rows' => 6],
+            ],
+            'news' => [
+                'kicker' => $kicker,
+                'title' => $title,
+                'lead' => ['label' => 'Introduction', 'type' => self::FIELD_TEXTAREA, 'rows' => 3],
+                'columns' => ['label' => 'Colonnes (2 ou 3)', 'type' => self::FIELD_NUMBER],
+                'limit' => ['label' => 'Nombre d’articles (1 à 3)', 'type' => self::FIELD_NUMBER],
+                'item_link_label' => ['label' => 'Libellé du lien de chaque article', 'type' => self::FIELD_TEXT],
+                'button_label' => ['label' => 'Libellé du lien vers la liste complète', 'type' => self::FIELD_TEXT],
+                'button_url' => ['label' => 'Lien vers la liste complète', 'type' => self::FIELD_TEXT],
+                'image' => $image,
+                'images' => $gallery,
+            ],
+            'timeline' => [
+                'kicker' => $kicker,
+                'title' => $title,
+                'lead' => ['label' => 'Introduction', 'type' => self::FIELD_TEXTAREA, 'rows' => 3],
+                'items' => ['label' => 'Étapes (une par ligne : Date ou période | Titre | Description)', 'type' => self::FIELD_TEXTAREA, 'rows' => 7],
+                'image' => $image,
             ],
             'checklist' => [
                 'kicker' => $kicker,
                 'title' => $title,
                 'lead' => ['label' => 'Introduction', 'type' => self::FIELD_TEXT],
+                'button_label' => ['label' => 'Libellé du bouton', 'type' => self::FIELD_TEXT],
+                'button_url' => ['label' => 'Lien du bouton', 'type' => self::FIELD_TEXT],
+                'badge_title' => ['label' => 'Titre du petit encart de mise en avant', 'type' => self::FIELD_TEXT],
+                'badge_text' => ['label' => 'Texte du petit encart', 'type' => self::FIELD_TEXT],
                 'image' => $image,
                 'images' => $gallery,
                 'items' => ['label' => 'Points (un par ligne)', 'type' => self::FIELD_TEXTAREA, 'rows' => 6],
@@ -103,7 +132,8 @@ class PageRendererService
                 'quote' => ['label' => 'Citation', 'type' => self::FIELD_TEXTAREA, 'rows' => 4],
                 'author' => ['label' => 'Auteur', 'type' => self::FIELD_TEXT],
                 'role' => ['label' => 'Fonction', 'type' => self::FIELD_TEXT],
-                'image' => ['label' => 'Portrait ou image de la citation', 'type' => self::FIELD_IMAGE],
+                'image' => ['label' => 'Photo illustrant le message', 'type' => self::FIELD_IMAGE],
+                'author_image' => ['label' => 'Portrait du président ou de l’auteur', 'type' => self::FIELD_IMAGE],
                 'images' => $gallery,
             ],
             'partners' => [
@@ -116,9 +146,18 @@ class PageRendererService
             'realisations' => [
                 'kicker' => ['label' => 'Sur-titre', 'type' => 'text'],
                 'title' => ['label' => 'Titre', 'type' => 'text'],
+                'lead' => ['label' => 'Texte d’introduction', 'type' => self::FIELD_TEXTAREA, 'rows' => 3],
                 'limit' => ['label' => 'Nombre de réalisations à afficher (vide = toutes)', 'type' => 'number'],
                 'button_label' => ['label' => 'Libellé du bouton (facultatif)', 'type' => 'text'],
                 'button_url' => ['label' => 'Lien du bouton', 'type' => 'text'],
+                'item_link_label' => ['label' => 'Libellé du lien de chaque réalisation', 'type' => self::FIELD_TEXT],
+                'empty_label' => ['label' => 'Message si aucune réalisation à afficher', 'type' => self::FIELD_TEXTAREA],
+                'filter_theme_label' => ['label' => 'Libellé du filtre par domaine', 'type' => self::FIELD_TEXT],
+                'filter_location_label' => ['label' => 'Libellé du filtre par lieu', 'type' => self::FIELD_TEXT],
+                'filter_all_themes_label' => ['label' => 'Option tous les domaines', 'type' => self::FIELD_TEXT],
+                'filter_all_locations_label' => ['label' => 'Option tous les lieux', 'type' => self::FIELD_TEXT],
+                'filter_submit_label' => ['label' => 'Libellé du bouton filtrer', 'type' => self::FIELD_TEXT],
+                'filter_clear_label' => ['label' => 'Libellé du lien effacer les filtres', 'type' => self::FIELD_TEXT],
             ],
             'cta' => [
                 'kicker' => $kicker,
@@ -191,12 +230,40 @@ class PageRendererService
                 continue;
             }
 
-            [$title, $description] = array_pad(explode('|', $line, 2), 2, '');
+            [$title, $description, $url, $buttonLabel] = array_pad(explode('|', $line, 4), 4, '');
 
-            $items[] = [
+            $item = [
                 'title' => trim($title),
                 'description' => trim($description),
             ];
+            if (trim($url) !== '') {
+                $item['url'] = trim($url);
+            }
+            if (trim($buttonLabel) !== '') {
+                $item['button_label'] = trim($buttonLabel);
+            }
+
+            $items[] = $item;
+        }
+
+        return $items;
+    }
+
+    /**
+     * Parse date-first rows for a CMS timeline.
+     *
+     * @return array<int, array{date: string, title: string, description: string}>
+     */
+    public static function parseTimelineItems(?string $raw): array
+    {
+        $items = [];
+        foreach (preg_split('/\r\n|\r|\n/', (string) $raw) as $line) {
+            $line = trim($line);
+            if ($line === '') {
+                continue;
+            }
+            [$date, $title, $description] = array_pad(explode('|', $line, 3), 3, '');
+            $items[] = ['date' => trim($date), 'title' => trim($title), 'description' => trim($description)];
         }
 
         return $items;
@@ -236,8 +303,11 @@ class PageRendererService
             $data[$field] = $input[$field] ?? null;
         }
 
-        if (in_array($type, ['facts', 'cards', 'checklist'], true) && isset($data['items'])) {
+        if (in_array($type, ['facts', 'cards', 'engagement', 'checklist'], true) && isset($data['items'])) {
             $data['items'] = static::parseItems($data['items']);
+        }
+        if ($type === 'timeline' && isset($data['items'])) {
+            $data['items'] = static::parseTimelineItems($data['items']);
         }
 
         return array_filter($data, fn ($value) => $value !== null && $value !== '');

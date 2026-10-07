@@ -5,30 +5,42 @@
 @section('og_type', 'article')
 @section('og_title', $post->title)
 @section('og_description', $metaDescription ?? '')
-@if ($post->main_image)
-    @section('og_image', asset($post->main_image))
+@if ($post->main_image && !\App\Support\Media::isBrowserCapture($post->main_image))
+    @section('og_image', \App\Support\Media::url($post->main_image))
 @endif
 @section('og_published_time', $post->created_at?->toISOString() ?? '')
 
 @section('content')
 
-    <section class="page-hero">
-        <div class="wrap">
-            <nav class="breadcrumbs" aria-label="Fil d'Ariane">
-                <a href="{{ route('home') }}">Accueil</a>
-                <span class="sep">/</span>
-                <a href="{{ route('blog.index') }}">Blog</a>
-                <span class="sep">/</span>
-                <span>{{ Str::limit($post->title, 40) }}</span>
-            </nav>
-            <h1 class="h-page">{{ $post->title }}</h1>
-            <p>
-                Publié le {{ $post->formattedDate() }}@if($post->author) par {{ $post->author }} @endif
-                &middot; {{ $post->readingTime() }} min de lecture
-                @if ($post->category)
-                    &middot; <strong style="color: #7fd4a4;">{{ $post->category }}</strong>
-                @endif
-            </p>
+    @php
+        $postGallery = array_values(array_filter(
+            $post->galleryImages(),
+            fn ($image) => !\App\Support\Media::isBrowserCapture($image),
+        ));
+    @endphp
+
+    <section class="page-hero page-hero-with-image">
+        <div class="wrap page-hero-layout">
+            <div class="page-hero-copy">
+                <nav class="breadcrumbs" aria-label="Fil d'Ariane">
+                    <a href="{{ route('home') }}">Accueil</a>
+                    <span class="sep">/</span>
+                    <a href="{{ route('blog.index') }}">Blog</a>
+                    <span class="sep">/</span>
+                    <span>{{ Str::limit($post->title, 40) }}</span>
+                </nav>
+                <h1 class="h-page">{{ $post->title }}</h1>
+                <p>
+                    Publié le {{ $post->formattedDate() }}@if($post->author) par {{ $post->author }} @endif
+                    &middot; {{ $post->readingTime() }} min de lecture
+                    @if ($post->category)
+                        &middot; <strong style="color: #7fd4a4;">{{ $post->category }}</strong>
+                    @endif
+                </p>
+            </div>
+            @if ($post->main_image && !\App\Support\Media::isBrowserCapture($post->main_image))
+                <figure class="page-hero-visual"><img src="{{ \App\Support\Media::url($post->main_image) }}" alt="{{ $post->title }}" fetchpriority="high"></figure>
+            @endif
         </div>
     </section>
 
@@ -40,10 +52,6 @@
                 <div style="height: 24px;"></div>
             @endif
 
-            @if ($post->main_image)
-                <img src="{{ \App\Support\Media::url($post->main_image) }}" alt="{{ $post->title }}" loading="lazy" data-lightbox style="width: 100%; aspect-ratio: 21/9; object-fit: cover; border: 1px solid var(--border); margin-bottom: 36px;">
-            @endif
-
             <div class="article-prose">
                 @forelse ($post->paragraphs() as $paragraph)
                     <p>{{ $paragraph }}</p>
@@ -52,11 +60,11 @@
                 @endforelse
             </div>
 
-            @if ($post->galleryImages())
+            @if ($postGallery)
                 <div style="margin-top: clamp(36px, 5vw, 56px);">
-                    <h2 class="h-section" style="font-size: 22px; margin-bottom: 24px;">Galerie</h2>
+                <h2 class="h-section" style="font-size: 22px; margin-bottom: 24px;">{{ \App\Models\Setting::get('blog_gallery_heading', 'Galerie') }}</h2>
                     <div class="grid-3" style="gap: 16px;">
-                        @foreach ($post->galleryImages() as $image)
+                        @foreach ($postGallery as $image)
                             <figure class="media-item">
                                 <img src="{{ \App\Support\Media::url($image) }}" alt="Illustration de l'article" loading="lazy" data-lightbox style="aspect-ratio: 4/3;">
                             </figure>
@@ -66,8 +74,8 @@
             @endif
 
             <div style="margin-top: clamp(40px, 6vw, 64px); padding-top: 28px; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px;">
-                <a href="{{ route('blog.index') }}" class="btn btn-ghost">Retour au blog</a>
-                <a href="{{ route('contact') }}" class="btn btn-primary">Nous contacter</a>
+                <a href="{{ route('blog.index') }}" class="btn btn-ghost">{{ \App\Models\Setting::get('blog_back_button', 'Retour au blog') }}</a>
+                <a href="{{ route('contact') }}" class="btn btn-primary">{{ \App\Models\Setting::get('blog_contact_button', 'Nous contacter') }}</a>
             </div>
 
         </div>
@@ -112,5 +120,9 @@
             font-size: 18px;
             color: var(--navy);
         }
+        .article-prose p { color:#596359; font-size:17px; line-height:1.9; }
+        .article-prose p:first-child { color:#315d43; font-size:19px; }
+        .article-prose { padding:clamp(22px,4vw,40px); background:#fff; border:1px solid #eee9e1; border-radius:16px; }
+        .article-prose + div h2 { font-family:'Playfair Display',Georgia,serif; color:#28362c; }
     </style>
 @endpush

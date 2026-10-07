@@ -57,21 +57,21 @@
             </div>
 
             <div class="field">
-                <label for="hero_image">Image de fond <span class="hint">URL externe ou chemin interne (ex. storage/pages/xxx.jpg). Laisser vide pour un en-tête uni.</span></label>
+                <label for="hero_image">Photo principale de la page <span class="hint">Elle illustre le bandeau à côté du titre. URL externe ou média téléversé dans le CMS.</span></label>
                 <input type="text" id="hero_image" name="hero_image" value="{{ old('hero_image', $page->hero_image) }}">
             </div>
 
             <div class="field">
-                <label for="hero_image_file">... ou téléverser une image</label>
+                <label for="hero_image_file">... ou téléverser une photo</label>
                 <input type="file" id="hero_image_file" name="hero_image_file" accept="image/png,image/jpeg,image/webp,image/svg+xml">
                 @error('hero_image_file') <span class="error-text">{{ $message }}</span> @enderror
 
                 @if ($page->hero_image)
                     <div class="media-current">
-                        <img src="{{ \App\Support\Media::url($page->hero_image) }}" alt="Image de fond actuelle">
+                        <img src="{{ \App\Support\Media::url($page->hero_image) }}" alt="Photo principale actuelle">
                         <label style="font-weight: 400;">
                             <input type="checkbox" name="remove_hero_image" value="1">
-                            Supprimer l'image de fond
+                            Supprimer la photo principale
                         </label>
                     </div>
                 @endif

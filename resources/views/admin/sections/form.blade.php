@@ -30,14 +30,17 @@
                     <div class="field">
                         <label for="{{ $inputId }}">{{ $config['label'] }}</label>
                         @if ($name === 'items')
-                            <textarea id="{{ $inputId }}" name="data[{{ $name }}]" rows="{{ $config['rows'] ?? 4 }}">{{ $section->itemsAsText() }}</textarea>
+                            <textarea id="{{ $inputId }}" name="data[{{ $name }}]" rows="{{ $config['rows'] ?? 4 }}">{{ old('data.'.$name, $section->itemsAsText($section->type)) }}</textarea>
                         @else
                             <textarea id="{{ $inputId }}" name="data[{{ $name }}]" rows="{{ $config['rows'] ?? 4 }}">{{ $currentValue }}</textarea>
                         @endif
                     </div>
                 @elseif ($fieldType === \App\Services\PageRendererService::FIELD_IMAGE)
                     <div class="field">
-                        <label for="{{ $inputId }}">{{ $config['label'] }} <span class="hint">Une image principale, affichée en haut de la section. Laissez le champ vide si vous téléversez un fichier.</span></label>
+                        <label for="{{ $inputId }}">
+                            {{ $name === 'author_image' ? 'Portrait du président ou de l’auteur' : ($page->page_key === 'programmes' && $section->type === 'checklist' ? 'Photo de cet axe d’activité' : $config['label']) }}
+                            <span class="hint">{{ $name === 'author_image' ? 'Le portrait s’affiche à côté de la photo qui illustre le message.' : ($page->page_key === 'programmes' && $section->type === 'checklist' ? 'Cette photo illustre l’axe et s’affiche à côté de son titre et de ses actions.' : 'Cette image illustre la section. Laissez le champ vide si vous téléversez un fichier.') }}</span>
+                        </label>
                         <input type="text" id="{{ $inputId }}" name="data[{{ $name }}]" value="{{ $currentValue }}">
 
                         <label for="data_file_{{ $name }}" style="margin-top: 8px;">... ou téléverser une image</label>

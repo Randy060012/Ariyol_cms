@@ -4,60 +4,71 @@
 
 @section('og_title', $metaTitle)
 @section('og_description', $metaDescription ?? '')
-@if ($page->hero_image)
-    @section('og_image', asset($page->hero_image))
+@if ($page->hero_image && !\App\Support\Media::isBrowserCapture($page->hero_image))
+    @section('og_image', \App\Support\Media::url($page->hero_image))
 @endif
 
 @section('content')
 
     @php
-        $heroImage = \App\Support\Media::url($page->hero_image);
-        $heroGallery = $page->heroGallery();
+        $heroImage = $page->hero_image && !\App\Support\Media::isBrowserCapture($page->hero_image)
+            ? \App\Support\Media::url($page->hero_image)
+            : null;
+        $heroGallery = array_values(array_filter(
+            $page->heroGallery(),
+            fn ($image) => !\App\Support\Media::isBrowserCapture($image),
+        ));
+        $heroVisual = $heroImage ?: (isset($heroGallery[0]) ? \App\Support\Media::url($heroGallery[0]) : null);
         $isHome = $page->page_key === 'home';
         $isContact = $page->page_key === 'contact';
     @endphp
 
-    @if ($isHome)
-        <section class="hero" @if ($heroImage) style="background-image: url('{{ $heroImage }}');" @endif>
-            <div class="wrap">
+    <section class="ngo-hero {{ $isHome ? 'ngo-hero-home' : 'ngo-hero-inner' }}">
+        <div class="wrap ngo-hero-grid">
+            <div class="ngo-hero-copy">
+                @unless ($isHome)
+                    <nav class="breadcrumbs ngo-breadcrumbs" aria-label="Fil d'Ariane">
+                        <a href="{{ route('home') }}">Accueil</a><span class="sep">/</span><span>{{ $page->title }}</span>
+                    </nav>
+                @endunless
                 @if ($page->hero_kicker)
-                    <span class="hero-kicker">{{ $page->hero_kicker }}</span>
+                    <span class="kicker">{{ $page->hero_kicker }}</span>
                 @endif
                 <h1 class="h-display">{{ $page->hero_title ?: $page->title }}</h1>
                 @if ($page->hero_subtitle)
                     <p class="lead">{{ $page->hero_subtitle }}</p>
                 @endif
-                <div class="hero-actions">
-                    <a href="{{ route('about') }}" class="btn btn-light">Découvrir notre vision</a>
-                    <a href="{{ route('contact') }}" class="btn btn-ghost-light">Devenir bénévole</a>
-                </div>
-            </div>
-        </section>
-    @else
-        <section class="page-hero" @if ($heroImage) style="background-image: url('{{ $heroImage }}');" @endif>
-            <div class="wrap">
-                <nav class="breadcrumbs" aria-label="Fil d'Ariane">
-                    <a href="{{ route('home') }}">Accueil</a>
-                <span class="sep">/</span>
-                    <span>{{ $page->title }}</span>
-                </nav>
-                <h1 class="h-page">{{ $page->hero_title ?: $page->title }}</h1>
-                @if ($page->hero_subtitle)
-                    <p>{{ $page->hero_subtitle }}</p>
+                @if ($isHome)
+                    <div class="hero-actions">
+                        <a href="{{ $siteHeader['cta_url'] ?? route('contact') }}" class="btn btn-primary">{{ $siteHeader['cta_label'] ?? 'S’engager' }} <span aria-hidden="true">↗</span></a>
+                        @if (\App\Models\Setting::get('home_secondary_cta_label'))
+                            <a href="{{ \App\Models\Setting::get('home_secondary_cta_url', route('programmes')) }}" class="btn btn-ghost">{{ \App\Models\Setting::get('home_secondary_cta_label') }} <span aria-hidden="true">→</span></a>
+                        @endif
+                    </div>
                 @endif
             </div>
-        </section>
-    @endif
+            @if ($heroVisual)
+                <figure class="ngo-hero-visual">
+                    <img src="{{ $heroVisual }}" alt="{{ $page->hero_title ?: $page->title }}" fetchpriority="high">
+                    @if (!$heroImage)<figcaption>Photo de présentation</figcaption>@endif
+                </figure>
+            @else
+                <div class="ngo-hero-art" aria-hidden="true"><span></span><span></span><span></span></div>
+            @endif
+        </div>
+    </section>
 
     {{-- Galerie de l'en-tête de page : photos optionnelles affichées sous le hero. --}}
-    @if (count($heroGallery))
+    @if (count($heroGallery) > 0 && ($heroImage || count($heroGallery) > 1))
         <section class="hero-gallery" aria-label="Galerie de la page">
             <div class="wrap">
                 <div class="hero-gallery-track">
                     @foreach ($heroGallery as $img)
-                        <figure class="hero-gallery-item">
-                            <img src="{{ \App\Support\Media::url($img) }}" alt="" loading="lazy" data-lightbox>
-                        </figure>
+                        @if ($heroImage || $loop->index > 0)
+                            <figure class="hero-gallery-item">
+                                <img src="{{ \App\Support\Media::url($img) }}" alt="" loading="lazy" data-lightbox>
+                            </figure>
+                        @endif
                     @endforeach
                 </div>
             </div>
@@ -65,7 +76,14 @@
     @endif
 
     @forelse ($sections as $section)
-        @include('pages.sections', ['section' => $section])
+        @include('pages.sections', [
+            'section' => $section,
+            'realisationResults' => $realisationResults ?? null,
+            'realisationThemes' => $realisationThemes ?? collect(),
+            'realisationLocations' => $realisationLocations ?? collect(),
+            'activeTheme' => $activeTheme ?? null,
+            'activeLocation' => $activeLocation ?? null,
+        ])
     @empty
         <section class="pad-section">
             <div class="wrap">

@@ -10,7 +10,7 @@
             <a href="{{ route('admin.realisations.create') }}" class="btn btn-green">Ajouter une réalisation</a>
         </div>
 
-        <p class="panel-sub" style="margin-top: -6px;">Affichées sur la page « Réalisations » (photo à gauche, texte à droite) et, pour les plus récentes, sur la page d'accueil via la section « Réalisations ».</p>
+        <p class="panel-sub" style="margin-top: -6px;">Chaque réalisation publiée possède sa page de détail, avec récit, photos, date et lieu. Les plus récentes sont aussi mises en avant sur l’accueil.</p>
 
         <div class="table-wrap">
             <table class="admin-table">
@@ -47,6 +47,9 @@
                                 </span>
                             </td>
                             <td>
+                                @if ($realisation->is_published && $realisation->slug)
+                                    <a href="{{ route('realisations.show', $realisation->slug) }}" target="_blank" rel="noopener" class="btn btn-ghost btn-sm">Voir</a>
+                                @endif
                                 <a href="{{ route('admin.realisations.edit', $realisation) }}" class="btn btn-ghost btn-sm">Modifier</a>
                                 <form method="POST" action="{{ route('admin.realisations.destroy', $realisation) }}" style="display: inline;" onsubmit="return confirm('Supprimer cette réalisation ?');">
                                     @csrf

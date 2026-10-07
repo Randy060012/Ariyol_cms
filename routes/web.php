@@ -24,7 +24,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [CmsPageController::class, 'show'])->defaults('slug', 'home')->name('home');
 Route::get('/a-propos', [CmsPageController::class, 'show'])->defaults('slug', 'a-propos')->name('about');
 Route::get('/programmes', [CmsPageController::class, 'show'])->defaults('slug', 'programmes')->name('programmes');
-Route::get('/realisations', [CmsPageController::class, 'show'])->defaults('slug', 'realisations')->name('realisations');
+Route::get('/realisations', [\App\Http\Controllers\Font\RealisationController::class, 'index'])->name('realisations');
 Route::get('/contact', [CmsPageController::class, 'show'])->defaults('slug', 'contact')->name('contact');
 
 // Formulaire de contact
@@ -33,6 +33,9 @@ Route::post('/contact', [ContactController::class, 'submitContact'])->name('cont
 // Blog
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{post:slug}', [BlogController::class, 'show'])->name('blog.show');
+
+// Fiches détaillées des actions, distinctes de la page CMS de liste.
+Route::get('/realisations/{realisation:slug}', [\App\Http\Controllers\Font\RealisationController::class, 'show'])->name('realisations.show');
 
 // Sitemap XML (doit rester avant le catch-all des pages CMS)
 Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Page;
 use App\Models\Post;
+use App\Models\Realisation;
 use DateTimeInterface;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
@@ -43,6 +44,18 @@ class SitemapController extends Controller
                     'lastmod' => $post->updated_at,
                     'priority' => '0.6',
                 ];
+            }
+        }
+
+        if (Realisation::tableExists()) {
+            foreach (Realisation::published()->get(['slug', 'updated_at']) as $realisation) {
+                if ($realisation->slug) {
+                    $entries[] = [
+                        'loc' => route('realisations.show', $realisation->slug),
+                        'lastmod' => $realisation->updated_at,
+                        'priority' => '0.6',
+                    ];
+                }
             }
         }
 

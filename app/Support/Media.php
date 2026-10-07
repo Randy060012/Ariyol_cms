@@ -16,6 +16,48 @@ use Illuminate\Support\Facades\Storage;
 class Media
 {
     /**
+     * Detect browser captures accidentally uploaded as site photos.
+     *
+     * The development media folder contains full-page screenshots (rather
+     * than field photography) at these exact capture sizes. Hiding those
+     * files lets the public site fall back to clearly labelled illustrations.
+     */
+    public static function isBrowserCapture(?string $value): bool
+    {
+        if (! self::isStored($value)) {
+            return false;
+        }
+
+        static $captureCache = [];
+        $value = (string) $value;
+
+        if (array_key_exists($value, $captureCache)) {
+            return $captureCache[$value];
+        }
+
+        $path = substr((string) $value, strlen(self::STORED_PREFIX));
+
+        if (! Storage::disk('public')->exists($path)) {
+            return $captureCache[$value] = false;
+        }
+
+        $contents = Storage::disk('public')->get($path);
+        $image = @getimagesizefromstring($contents);
+
+        if (! is_array($image)) {
+            return $captureCache[$value] = false;
+        }
+
+        return $captureCache[$value] = in_array([$image[0], $image[1]], [
+            [1763, 899],
+            [1763, 952],
+            [1883, 653],
+            [1763, 2923],
+            [1763, 4486],
+        ], true);
+    }
+
+    /**
      * Public disk prefix used for every uploaded file.
      */
     public const STORED_PREFIX = 'storage/';

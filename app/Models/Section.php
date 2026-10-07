@@ -42,7 +42,7 @@ class Section extends Model
     /**
      * Convert the items array back to editable "Title | Description" lines.
      */
-    public function itemsAsText(): string
+    public function itemsAsText(?string $type = null): string
     {
         $items = $this->field('items', []);
 
@@ -50,8 +50,24 @@ class Section extends Model
             return (string) $items;
         }
 
+        if ($type === 'timeline') {
+            return collect($items)
+                ->map(fn ($item) => trim(($item['date'] ?? '').' | '.($item['title'] ?? '').' | '.($item['description'] ?? '')))
+                ->implode("\n");
+        }
+
         return collect($items)
-            ->map(fn ($item) => trim(($item['title'] ?? '').' | '.($item['description'] ?? '')))
+            ->map(function ($item) {
+                $parts = [$item['title'] ?? '', $item['description'] ?? ''];
+                if (!empty($item['url']) || !empty($item['button_label'])) {
+                    $parts[] = $item['url'] ?? '';
+                }
+                if (!empty($item['button_label'])) {
+                    $parts[] = $item['button_label'];
+                }
+
+                return trim(implode(' | ', $parts));
+            })
             ->implode("\n");
     }
 
@@ -108,6 +124,7 @@ class Section extends Model
             $this->gallery('images'),
             $this->gallery('logos'),
             [$this->field('image')],
+            [$this->field('author_image')],
             array_values($this->itemImages()),
         );
 

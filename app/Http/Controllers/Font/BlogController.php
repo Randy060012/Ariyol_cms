@@ -35,10 +35,15 @@ class BlogController extends Controller
                 ->pluck('category')
             : collect();
 
+        $blogHeroImage = Post::tableExists()
+            ? Post::published()->ordered()->whereNotNull('main_image')->value('main_image')
+            : null;
+
         return view('pages.blog', [
             'posts' => $posts,
             'categories' => $categories,
             'activeCategory' => $request->input('categorie'),
+            'blogHeroImage' => $blogHeroImage,
         ]);
     }
 

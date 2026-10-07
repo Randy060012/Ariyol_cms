@@ -3,14 +3,17 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Admin\Concerns\HandlesMediaUploads;
 use App\Models\Realisation;
+use App\Support\Media;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class RealisationController extends Controller
 {
+    use HandlesMediaUploads;
+
     public function index(): View
     {
         $realisations = Realisation::query()
@@ -31,16 +34,17 @@ class RealisationController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        // Validate files first so a rejected upload never persists a partial item.
-        $this->validateImage($request);
+        $this->validateUploads($request);
 
-        $realisation = Realisation::create($this->validated($request));
+        $data = $this->validated($request);
+        $data['slug'] = Realisation::uniqueSlug($request->input('slug') ?: $request->input('title'));
+        $realisation = Realisation::create($data);
 
-        $this->handleImage($request, $realisation);
+        $this->handleUploads($request, $realisation);
 
         return redirect()
             ->route('admin.realisations.edit', $realisation)
-            ->with('success', 'Réalisation créée. Vous pouvez ajouter la photo.');
+            ->with('success', 'Réalisation créée. Vous pouvez compléter sa galerie.');
     }
 
     public function edit(Realisation $realisation): View
@@ -53,11 +57,13 @@ class RealisationController extends Controller
 
     public function update(Request $request, Realisation $realisation): RedirectResponse
     {
-        $this->validateImage($request);
+        $this->validateUploads($request);
 
-        $realisation->update($this->validated($request));
+        $data = $this->validated($request);
+        $data['slug'] = Realisation::uniqueSlug($request->input('slug') ?: $request->input('title'), $realisation->id);
+        $realisation->update($data);
 
-        $this->handleImage($request, $realisation);
+        $this->handleUploads($request, $realisation);
 
         return redirect()
             ->route('admin.realisations.edit', $realisation)
@@ -66,7 +72,7 @@ class RealisationController extends Controller
 
     public function destroy(Realisation $realisation): RedirectResponse
     {
-        $this->deleteStored($realisation->image);
+        Media::deleteStoredAll(array_merge([$realisation->image], $realisation->galleryImages()));
 
         $realisation->delete();
 
@@ -83,9 +89,14 @@ class RealisationController extends Controller
     {
         return $request->validate([
             'title' => ['required', 'string', 'max:255'],
+            'slug' => ['nullable', 'string', 'max:255', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
             'description' => ['nullable', 'string', 'max:60000'],
+            'content' => ['nullable', 'string', 'max:60000'],
+            'image' => ['nullable', 'string', 'max:2048'],
             'date' => ['nullable', 'date'],
             'location' => ['nullable', 'string', 'max:160'],
+            'category' => ['nullable', 'string', 'max:100'],
+            'impact' => ['nullable', 'string', 'max:255'],
             'is_published' => ['nullable', 'boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:65535'],
         ]) + [
@@ -97,41 +108,23 @@ class RealisationController extends Controller
      |  Image lifecycle
      * ------------------------------------------------------------------ */
 
-    private function validateImage(Request $request): void
+    private function validateUploads(Request $request): void
     {
+        $this->validateSingleUpload($request, 'image_file');
         $request->validate([
-            'image_file' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,svg', 'max:4096'],
+            'gallery_files' => ['nullable', 'array', 'max:12'],
+            'gallery_files.*' => Media::uploadRules(),
         ]);
     }
 
     /**
      * Image: upload wins, remove-checkbox clears it, otherwise preserved.
      */
-    private function handleImage(Request $request, Realisation $realisation): void
+    private function handleUploads(Request $request, Realisation $realisation): void
     {
-        if ($request->hasFile('image_file')) {
-            $this->deleteStored($realisation->image);
-
-            $path = $request->file('image_file')->store('realisations', 'public');
-            $realisation->forceFill(['image' => 'storage/'.$path])->save();
-
-            return;
-        }
-
-        if ($request->boolean('remove_image')) {
-            $this->deleteStored($realisation->image);
-            $realisation->forceFill(['image' => null])->save();
-        }
-
-        // No upload, no removal: keep the current image.
-    }
-
-    private function deleteStored(?string $value): void
-    {
-        if (! is_string($value) || ! str_starts_with($value, 'storage/')) {
-            return;
-        }
-
-        Storage::disk('public')->delete(substr($value, strlen('storage/')));
+        $realisation->forceFill([
+            'image' => $this->resolveImage($request, 'image_file', 'remove_image', $realisation->image, 'realisations', 'image'),
+            'gallery' => $this->resolveGallery($request, 'gallery_files', 'gallery_remove', $realisation->galleryImages(), 'realisations'),
+        ])->save();
     }
 }

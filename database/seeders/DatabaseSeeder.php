@@ -42,6 +42,8 @@ class DatabaseSeeder extends Seeder
             'brand_tagline' => ['African Young Leaders', 'text', 'general'],
             'header_cta_label' => ['Rejoignez-nous', 'text', 'header'],
             'header_cta_url' => ['/contact', 'text', 'header'],
+            'home_secondary_cta_label' => ['Découvrir nos actions', 'text', 'home'],
+            'home_secondary_cta_url' => ['/programmes', 'text', 'home'],
             'footer_description' => ['Organisation non gouvernementale dédiée aux Droits Humains, à la Paix, à l\'Environnement et au Leadership des Jeunes.', 'textarea', 'footer'],
             'footer_copyright' => ['Copyright © '.date('Y').' African Young Leaders (AFRIYOL). Tous droits réservés.', 'text', 'footer'],
             'footer_president' => ['Président : M. SILIVI Koffi Victor', 'text', 'footer'],
@@ -50,6 +52,25 @@ class DatabaseSeeder extends Seeder
             'social_linkedin' => ['https://www.linkedin.com/company/afriyol/', 'text', 'contact'],
             'social_facebook' => ['https://www.facebook.com/AfricanYoungLeadersAfriyol', 'text', 'contact'],
             'social_twitter' => ['https://x.com/afriyol82635', 'text', 'contact'],
+            'blog_kicker' => ['Actualités', 'text', 'blog'],
+            'blog_home_title' => ['Les nouvelles du terrain', 'text', 'blog'],
+            'blog_home_intro' => ['', 'textarea', 'blog'],
+            'blog_home_link' => ['Toutes les actualités', 'text', 'blog'],
+            'blog_page_title' => ['Blog - Actualités et articles | AFRIYOL', 'text', 'blog'],
+            'blog_hero_image' => ['', 'text', 'blog'],
+            'blog_page_kicker' => ['Blog', 'text', 'blog'],
+            'blog_page_heading' => ["Le blog d'AFRIYOL", 'text', 'blog'],
+            'blog_page_intro' => ["Actualités, retours d'expérience et coulisses de nos actions sur le terrain.", 'textarea', 'blog'],
+            'blog_filter_all' => ['Tous les articles', 'text', 'blog'],
+            'blog_nav_label' => ['Blog', 'text', 'navigation'],
+            'blog_gallery_heading' => ['Galerie', 'text', 'blog'],
+            'blog_back_button' => ['Retour au blog', 'text', 'blog'],
+            'blog_contact_button' => ['Nous contacter', 'text', 'blog'],
+            'realisation_detail_kicker' => ['Action de terrain', 'text', 'realisations'],
+            'realisation_detail_result_label' => ['Résultat clé', 'text', 'realisations'],
+            'realisation_gallery_heading' => ['Photos de l’action', 'text', 'realisations'],
+            'realisation_back_button' => ['Toutes les réalisations', 'text', 'realisations'],
+            'realisation_contact_button' => ['Soutenir nos actions', 'text', 'realisations'],
         ];
 
         foreach ($settings as $key => [$value, $type, $group]) {
@@ -76,6 +97,20 @@ class DatabaseSeeder extends Seeder
                             ['title' => '500+', 'description' => 'Plants mis en terre à Zéglé-Sagonou contre le changement climatique'],
                             ['title' => '1 200+', 'description' => 'Enfants et jeunes sensibilisés lors de la Journée de l\'Enfant Africain'],
                             ['title' => 'Vice-présidence', 'description' => 'Membre exécutif de la Plateforme Nationale RSE-SC TOGO'],
+                        ],
+                    ]],
+                    ['checklist', [
+                        'kicker' => 'Qui sommes-nous ?',
+                        'title' => 'Des jeunes engagés aux côtés des communautés',
+                        'lead' => 'AFRIYOL agit avec les jeunes et les communautés pour faire avancer la paix, les droits humains et le développement durable.',
+                        'badge_title' => 'À vos côtés',
+                        'badge_text' => 'Des réponses construites avec les communautés',
+                        'button_label' => 'Découvrir notre mission',
+                        'button_url' => '/a-propos',
+                        'items' => [
+                            ['title' => 'Éducation et leadership', 'description' => 'Des jeunes outillés pour construire leur avenir'],
+                            ['title' => 'Paix et droits humains', 'description' => 'Le dialogue, la cohésion et l’inclusion au cœur des actions'],
+                            ['title' => 'Environnement', 'description' => 'Des initiatives locales pour un cadre de vie durable'],
                         ],
                     ]],
                     ['cards', [
@@ -110,6 +145,17 @@ class DatabaseSeeder extends Seeder
                         'title' => 'Nos partenaires et collaborateurs',
                         'logos' => [], // Logos téléversés depuis l'administration (page Accueil).
                     ]],
+                    ['engagement', [
+                        'kicker' => 'Passer à l’action',
+                        'title' => 'Comment souhaitez-vous agir ?',
+                        'lead' => 'Chaque contribution aide les communautés à construire un avenir plus juste et durable.',
+                        'columns' => '3',
+                        'items' => [
+                            ['title' => 'Soutenir nos actions', 'description' => 'Contribuez aux initiatives de terrain et à leur continuité.', 'url' => '/contact?subject=don', 'button_label' => 'Faire un don'],
+                            ['title' => 'Devenir bénévole', 'description' => 'Mettez votre temps et vos compétences au service des communautés.', 'url' => '/contact?subject=benevole', 'button_label' => 'Nous rejoindre'],
+                            ['title' => 'Créer un partenariat', 'description' => 'Construisons ensemble une action adaptée aux besoins locaux.', 'url' => '/contact?subject=partenariat', 'button_label' => 'Nous contacter'],
+                        ],
+                    ]],
                     // Réalisations récentes (photo à gauche, texte à droite) :
                     // contenu géré dans le menu « Réalisations » de l'administration.
                     ['realisations', [
@@ -118,6 +164,16 @@ class DatabaseSeeder extends Seeder
                         'limit' => '3',
                         'button_label' => 'Voir toutes nos réalisations',
                         'button_url' => '/realisations',
+                    ]],
+                    ['news', [
+                        'kicker' => 'Actualités',
+                        'title' => 'Les nouvelles du terrain',
+                        'lead' => 'Les projets, les rencontres et les avancées des communautés.',
+                        'columns' => '3',
+                        'limit' => '3',
+                        'item_link_label' => 'Lire l’article',
+                        'button_label' => 'Toutes les actualités',
+                        'button_url' => '/blog',
                     ]],
                     ['cta', [
                         'kicker' => 'Engagez-vous',
@@ -387,24 +443,32 @@ class DatabaseSeeder extends Seeder
             [
                 'title' => 'Opération « Togo Propre » à Tsévié',
                 'description' => 'Plus de 300 volontaires mobilisés avec la Mairie Zio 1 pour le curage des caniveaux et la collecte des déchets sur les axes principaux de la ville, accompagnés d\'une sensibilisation à l\'éco-citoyenneté.',
+                'category' => 'Environnement',
+                'impact' => '300 volontaires mobilisés',
                 'date' => '2026-03-07',
                 'location' => 'Tsévié (Zio 1)',
             ],
             [
                 'title' => 'Suivi écologique des 500 plants de Zéglé-Sagonou',
                 'description' => 'Inspection trimestrielle des plants d\'arbres du programme de reboisement : taux de survie, arrosage et remplacement des plants fragiles, avec les volontaires du village.',
+                'category' => 'Environnement',
+                'impact' => '500 plants suivis',
                 'date' => '2026-01-31',
                 'location' => 'Zéglé-Sagonou',
             ],
             [
                 'title' => 'Journée Portes Ouvertes au centre IYF',
                 'description' => 'Mobilisation de la jeunesse autour de l\'engagement communautaire : présentation des axes d\'intervention, ateliers d\'échanges et inscriptions des nouveaux bénévoles.',
+                'category' => 'Jeunesse',
+                'impact' => 'De nouveaux bénévoles accueillis',
                 'date' => '2026-04-11',
                 'location' => 'Tsévié',
             ],
             [
                 'title' => 'Atelier Leadership & Art Oratoire à JOKO-TOGO',
                 'description' => 'Formation du staff et des enfants de l\'orphelinat à la prise de parole en public et au débat, avec le soutien des Universités Sociales du Togo (UST).',
+                'category' => 'Éducation',
+                'impact' => 'Atelier de leadership et d’expression',
                 'date' => '2025-08-23',
                 'location' => 'Orphelinat JOKO-TOGO',
             ],

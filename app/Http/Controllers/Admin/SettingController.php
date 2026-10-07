@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
+use App\Support\Media;
 use App\Services\SettingsService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -25,6 +27,8 @@ class SettingController extends Controller
         $validated = $request->validate([
             'values' => ['required', 'array'],
             'values.*' => ['nullable', 'string'],
+            'blog_hero_image_file' => ['nullable', ...Media::uploadRules()],
+            'remove_blog_hero_image' => ['nullable', 'boolean'],
             'types' => ['nullable', 'array'],
             'groups' => ['nullable', 'array'],
         ]);
@@ -39,6 +43,15 @@ class SettingController extends Controller
 
                 $values[$logoKey] = 'storage/'.$path;
             }
+        }
+
+        $currentBlogCover = Setting::get('blog_hero_image');
+        if ($request->hasFile('blog_hero_image_file')) {
+            Media::deleteStored($currentBlogCover);
+            $values['blog_hero_image'] = Media::store($request->file('blog_hero_image_file'), 'pages');
+        } elseif ($request->boolean('remove_blog_hero_image')) {
+            Media::deleteStored($currentBlogCover);
+            $values['blog_hero_image'] = '';
         }
 
         SettingsService::saveMany(
