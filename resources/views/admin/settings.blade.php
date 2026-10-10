@@ -24,19 +24,25 @@
 
         <div class="panel">
             <h2>Header</h2>
+            <p class="panel-sub">Le bouton principal renvoie vers le formulaire de contact avec le motif « don » présélectionné. Vous pouvez modifier son texte et sa destination.</p>
 
             <div class="field">
                 <label for="values[header_cta_label]">Libellé du bouton d'action</label>
-                <input type="text" id="values[header_cta_label]" name="values[header_cta_label]" value="{{ old('values.header_cta_label', \App\Models\Setting::get('header_cta_label', 'Rejoignez-nous')) }}">
+                <input type="text" id="values[header_cta_label]" name="values[header_cta_label]" value="{{ old('values.header_cta_label', \App\Models\Setting::get('header_cta_label', 'Faire un don')) }}">
             </div>
             <div class="field">
                 <label for="values[header_cta_url]">Lien du bouton d'action</label>
-                <input type="text" id="values[header_cta_url]" name="values[header_cta_url]" value="{{ old('values.header_cta_url', \App\Models\Setting::get('header_cta_url', '/contact')) }}">
+                <input type="text" id="values[header_cta_url]" name="values[header_cta_url]" value="{{ old('values.header_cta_url', \App\Models\Setting::get('header_cta_url', '/contact?subject=don')) }}">
             </div>
+            @php $currentHeaderLogo = \App\Models\Setting::get('header_logo') ?: 'images/logo.svg'; @endphp
             <div class="field">
-                <label for="logo_files[header_logo]">Logo du header <span class="hint">SVG ou PNG, fond clair recommandé. Laisser vide pour conserver le logo par défaut.</span></label>
+                <label for="logo_files[header_logo]">Logo du site <span class="hint">Ce logo s’affiche dans l’en-tête et dans le pied de page tant qu’aucun logo distinct n’est défini pour le pied de page.</span></label>
+                <div class="media-current"><img src="{{ \App\Support\Media::url($currentHeaderLogo) }}" alt="Logo actuel du site"></div>
                 <input type="file" id="logo_files[header_logo]" name="logo_files[header_logo]" accept="image/svg+xml,image/png,image/jpeg">
                 @error('logo_files.header_logo') <span class="error-text">{{ $message }}</span> @enderror
+                @if (\App\Models\Setting::get('header_logo'))
+                    <label style="font-weight:400;margin-top:8px;"><input type="checkbox" name="remove_header_logo" value="1"> Revenir au logo AFRIYOL par défaut</label>
+                @endif
             </div>
         </div>
 
@@ -55,6 +61,17 @@
 
         <div class="panel">
             <h2>Footer</h2>
+
+            @php $currentFooterLogo = \App\Models\Setting::get('footer_logo'); @endphp
+            <div class="field">
+                <label for="logo_files[footer_logo]">Logo du pied de page <span class="hint">Optionnel. Si vous n’en choisissez pas, le logo du site ci-dessus sera utilisé.</span></label>
+                <div class="media-current"><img src="{{ \App\Support\Media::url($currentFooterLogo ?: $currentHeaderLogo) }}" alt="Logo actuel du pied de page"></div>
+                <input type="file" id="logo_files[footer_logo]" name="logo_files[footer_logo]" accept="image/svg+xml,image/png,image/jpeg">
+                @error('logo_files.footer_logo') <span class="error-text">{{ $message }}</span> @enderror
+                @if ($currentFooterLogo)
+                    <label style="font-weight:400;margin-top:8px;"><input type="checkbox" name="remove_footer_logo" value="1"> Utiliser le logo du site dans le pied de page</label>
+                @endif
+            </div>
 
             <div class="field">
                 <label for="values[footer_description]">Description courte</label>
@@ -79,7 +96,11 @@
             </div>
             <div class="field">
                 <label for="values[contact_email]">Email de contact</label>
-                <input type="text" id="values[contact_email]" name="values[contact_email]" value="{{ old('values.contact_email', \App\Models\Setting::get('contact_email', 'contact@afriyol.org')) }}">
+                <input type="email" id="values[contact_email]" name="values[contact_email]" value="{{ old('values.contact_email', \App\Models\Setting::get('contact_email', 'afriyol95@gmail.com')) }}">
+            </div>
+            <div class="field">
+                <label for="values[contact_phone]">Téléphone de contact</label>
+                <input type="tel" id="values[contact_phone]" name="values[contact_phone]" value="{{ old('values.contact_phone', \App\Models\Setting::get('contact_phone', '+22871462929')) }}">
             </div>
             <div class="field">
                 <label for="values[social_linkedin]">URL LinkedIn</label>

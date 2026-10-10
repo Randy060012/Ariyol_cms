@@ -36,6 +36,9 @@
                 <h4>Contact</h4>
                 <div class="footer-meta">
                     <span>Siège : {{ $siteFooter['address'] }}</span>
+                    @if (!empty($siteFooter['phone']))
+                        <span><a href="tel:{{ preg_replace('/[^0-9+]/', '', $siteFooter['phone']) }}">{{ $siteFooter['phone'] }}</a></span>
+                    @endif
                     <span><a href="mailto:{{ $siteFooter['email'] }}">{{ $siteFooter['email'] }}</a></span>
                 </div>
             </div>

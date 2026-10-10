@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Mail\ContactFormMail;
 use App\Models\Contact;
+use App\Models\Setting;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Mail;
@@ -21,6 +22,7 @@ class SendContactEmailJob implements ShouldQueue
 
     public function handle(): void
     {
-        Mail::to('contact@afriyol.org')->send(new ContactFormMail($this->contact));
+        Mail::to(Setting::get('contact_email', 'afriyol95@gmail.com'))
+            ->send(new ContactFormMail($this->contact));
     }
 }

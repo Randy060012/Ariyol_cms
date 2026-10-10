@@ -27,6 +27,10 @@ class SettingController extends Controller
         $validated = $request->validate([
             'values' => ['required', 'array'],
             'values.*' => ['nullable', 'string'],
+            'logo_files.header_logo' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,svg', 'max:4096'],
+            'logo_files.footer_logo' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,svg', 'max:4096'],
+            'remove_header_logo' => ['nullable', 'boolean'],
+            'remove_footer_logo' => ['nullable', 'boolean'],
             'blog_hero_image_file' => ['nullable', ...Media::uploadRules()],
             'remove_blog_hero_image' => ['nullable', 'boolean'],
             'types' => ['nullable', 'array'],
@@ -35,13 +39,16 @@ class SettingController extends Controller
 
         $values = $validated['values'];
 
-        // Handle image uploads (header_logo / footer_logo)
+        // Update or remove logos only when an administrator explicitly changes them.
         foreach (['header_logo', 'footer_logo'] as $logoKey) {
-            if ($request->hasFile("logo_files.{$logoKey}")) {
-                $path = $request->file("logo_files.{$logoKey}")
-                    ->store('logos', 'public');
+            $currentLogo = Setting::get($logoKey);
 
-                $values[$logoKey] = 'storage/'.$path;
+            if ($request->hasFile("logo_files.{$logoKey}")) {
+                Media::deleteStored($currentLogo);
+                $values[$logoKey] = Media::store($request->file("logo_files.{$logoKey}"), 'logos');
+            } elseif ($request->boolean("remove_{$logoKey}")) {
+                Media::deleteStored($currentLogo);
+                $values[$logoKey] = $logoKey === 'header_logo' ? 'images/logo.svg' : '';
             }
         }
 

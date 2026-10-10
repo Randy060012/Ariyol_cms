@@ -679,6 +679,12 @@
         .nav-links { gap:clamp(12px,1.7vw,24px); }
         .nav-links a { font-size:12px; font-weight:500; text-transform:none; }
         .nav-links a.is-active { color:var(--green); }
+        .nav-cta { white-space:nowrap; padding-inline:16px; font-size:12px; }
+        .mobile-nav-action { display:none; }
+        @media (max-width:860px) {
+            .mobile-nav-action { display:block; padding:8px 16px 14px; background:var(--white); }
+            .nav-links .mobile-nav-cta { margin:4px 8px; padding:13px 18px; color:#fff; background:var(--green); border-radius:999px; text-align:center; font-weight:700; }
+        }
         .btn { min-height:44px; border-radius:999px; padding:11px 20px; font-size:13px; font-weight:600; transition:transform .2s ease,background .2s ease,box-shadow .2s ease; }
         .btn:hover { transform:translateY(-2px); }
         .btn-primary { background:var(--green); box-shadow:0 8px 20px rgba(0,138,60,.17); }

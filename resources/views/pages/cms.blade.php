@@ -106,7 +106,12 @@
                             </div>
                             <div class="fact">
                                 <strong>Email</strong>
-                                <span><a href="mailto:{{ \App\Models\Setting::get('contact_email', 'contact@afriyol.org') }}">{{ \App\Models\Setting::get('contact_email', 'contact@afriyol.org') }}</a></span>
+                                <span><a href="mailto:{{ \App\Models\Setting::get('contact_email', 'afriyol95@gmail.com') }}">{{ \App\Models\Setting::get('contact_email', 'afriyol95@gmail.com') }}</a></span>
+                            </div>
+                            <div class="fact">
+                                <strong>Téléphone</strong>
+                                @php $contactPhone = \App\Models\Setting::get('contact_phone', '+22871462929'); @endphp
+                                <span><a href="tel:{{ preg_replace('/[^0-9+]/', '', $contactPhone) }}">{{ $contactPhone }}</a></span>
                             </div>
                             <div class="fact">
                                 <strong>Réseaux sociaux officiels</strong>
@@ -153,6 +158,7 @@
                                 <label for="subject">Objet de votre démarche <span class="req">*</span></label>
                                 <select id="subject" name="subject" required>
                                     <option value="">Sélectionnez une option</option>
+                                    <option value="don" @selected(old('subject', request('subject')) === 'don')>Faire un don / Soutenir une action</option>
                                     <option value="benevole" @selected(old('subject') === 'benevole')>Devenir bénévole / Membre</option>
                                     <option value="partenariat" @selected(old('subject') === 'partenariat')>Proposition de partenariat</option>
                                     <option value="information" @selected(old('subject') === 'information')>Demande d'information</option>

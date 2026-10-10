@@ -21,6 +21,9 @@
                 <li>
                     <a href="{{ route('blog.index') }}" class="{{ request()->routeIs('blog.*') ? 'is-active' : '' }}">Blog</a>
                 </li>
+                <li class="mobile-nav-action">
+                    <a href="{{ $siteHeader['cta_url'] }}" class="mobile-nav-cta">{{ $siteHeader['cta_label'] }}</a>
+                </li>
             </ul>
 
             <a href="{{ $siteHeader['cta_url'] }}" class="btn btn-primary nav-cta">{{ $siteHeader['cta_label'] }}</a>

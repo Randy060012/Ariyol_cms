@@ -45,11 +45,11 @@ class SettingsService
     public static function header(): array
     {
         return [
-            'logo' => Setting::get('header_logo'),
+            'logo' => Setting::get('header_logo') ?: 'images/logo.svg',
             'brand_name' => Setting::get('brand_name', 'AFRIYOL'),
             'brand_tagline' => Setting::get('brand_tagline', 'African Young Leaders'),
-            'cta_label' => Setting::get('header_cta_label', 'Rejoignez-nous'),
-            'cta_url' => Setting::get('header_cta_url', '/contact'),
+            'cta_label' => Setting::get('header_cta_label', 'Faire un don'),
+            'cta_url' => Setting::get('header_cta_url', '/contact?subject=don'),
         ];
     }
 
@@ -59,11 +59,12 @@ class SettingsService
     public static function footer(): array
     {
         return [
-            'logo' => Setting::get('footer_logo') ?? Setting::get('header_logo'),
+            'logo' => Setting::get('footer_logo') ?: (Setting::get('header_logo') ?: 'images/logo.svg'),
             'brand_name' => Setting::get('brand_name', 'AFRIYOL'),
             'description' => Setting::get('footer_description', 'Organisation non gouvernementale dédiée aux Droits Humains, à la Paix, à l\'Environnement et au Leadership des Jeunes.'),
             'address' => Setting::get('contact_address', 'Tsévié, Daviémodji (Togo)'),
-            'email' => Setting::get('contact_email', 'contact@afriyol.org'),
+            'email' => Setting::get('contact_email', 'afriyol95@gmail.com'),
+            'phone' => Setting::get('contact_phone', '+22871462929'),
             'linkedin' => Setting::get('social_linkedin'),
             'facebook' => Setting::get('social_facebook'),
             'twitter' => Setting::get('social_twitter'),
